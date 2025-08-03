@@ -1,5 +1,7 @@
 -- +goose up
-CREATE TABLE IF NOT EXISTS roles (
+CREATE SCHEMA IF NOT EXISTS istanahp;
+
+CREATE TABLE IF NOT EXISTS istanahp.roles (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(100) UNIQUE NOT NULL, -- e.g., 'Admin', 'Manager', 'Cashier'
     description TEXT,
@@ -7,7 +9,7 @@ CREATE TABLE IF NOT EXISTS roles (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMPTZ
 );
-COMMENT ON TABLE roles IS 'Defines user roles and their permissions.';
+COMMENT ON TABLE istanahp.roles IS 'Defines user roles and their permissions.';
 
 -- +goose down
-DROP TABLE IF EXISTS roles;
+DROP TABLE IF EXISTS istanahp.roles;

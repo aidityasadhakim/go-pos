@@ -1,5 +1,5 @@
 -- +goose up
-CREATE TABLE IF NOT EXISTS purchase_statuses (
+CREATE TABLE IF NOT EXISTS istanahp.purchase_statuses (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(100) UNIQUE NOT NULL, -- e.g., 'Pending Order', 'Received', 'Cancelled', 'Returned'
     description TEXT,
@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS purchase_statuses (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMPTZ
 );
-COMMENT ON TABLE purchase_statuses IS 'Defines the status of a purchase order.';
+COMMENT ON TABLE istanahp.purchase_statuses IS 'Defines the status of a purchase order.';
 
 -- +goose down
-DROP TABLE IF EXISTS purchase_statuses;
+DROP TABLE IF EXISTS istanahp.purchase_statuses;

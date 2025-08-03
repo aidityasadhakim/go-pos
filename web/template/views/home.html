@@ -1,0 +1,14 @@
+{{ template "layout.html" . }}
+
+{{ define "content" }}
+  <div class="container">
+      <h1>Hello World</h1>
+      <p>somethinggg Welcome to the Go POS System</p>
+  </div>
+
+  <button hx-get="/clicked"
+      hx-trigger="click"
+      hx-swap="outerHTML">
+      Click Me!
+  </button>
+{{ end }}

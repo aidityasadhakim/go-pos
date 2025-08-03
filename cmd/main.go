@@ -1,8 +1,8 @@
 package main
 
 import (
-	"net/http"
-
+	"github.com/aidityasadhakim/go-pos/internal/app/routes"
+	"github.com/aidityasadhakim/go-pos/internal/platform/server"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -13,12 +13,14 @@ func main() {
 
 	e := echo.New()
 	e.Use(middleware.Logger())
-	e.GET("/", func(c echo.Context) error {
+	e.Use(middleware.Recover())
 
-		return c.JSON(http.StatusOK, map[string]string{
-			"message": "Welcome to the Go POS API",
-		})
-	})
+	// Setup template renderer
+	renderer := server.NewTemplateRenderer("web/template")
+	e.Renderer = renderer
+
+	// Setup routes
+	routes.SetupRoutes(e)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }
