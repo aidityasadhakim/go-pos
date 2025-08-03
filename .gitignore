@@ -52,3 +52,5 @@ pids
 /dist/
 /node_modules/
 /views/**/*.go
+
+AGENTS.MD

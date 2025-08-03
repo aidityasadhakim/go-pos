@@ -1,14 +1,32 @@
-{{ template "layout.html" . }}
+{{ template "header.html" . }}
+  <div class="bg-white rounded-lg shadow p-6">
+      <h1 class="text-2xl font-bold text-gray-900 mb-4">Dashboard</h1>
+      <p class="text-gray-600 mb-6">Welcome to the Go POS System</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 class="text-lg font-semibold text-blue-900">Today's Sales</h3>
+              <p class="text-2xl font-bold text-blue-600">$0.00</p>
+          </div>
+          
+          <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+              <h3 class="text-lg font-semibold text-green-900">Products</h3>
+              <p class="text-2xl font-bold text-green-600">0</p>
+          </div>
+          
+          <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+              <h3 class="text-lg font-semibold text-purple-900">Customers</h3>
+              <p class="text-2xl font-bold text-purple-600">0</p>
+          </div>
+      </div>
 
-{{ define "content" }}
-  <div class="container">
-      <h1>Hello World</h1>
-      <p>somethinggg Welcome to the Go POS System</p>
+      <div class="mt-8">
+          <button hx-get="/clicked"
+              hx-trigger="click"
+              hx-swap="outerHTML"
+              class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out">
+              Test Button
+          </button>
+      </div>
   </div>
-
-  <button hx-get="/clicked"
-      hx-trigger="click"
-      hx-swap="outerHTML">
-      Click Me!
-  </button>
-{{ end }}
+{{ template "footer.html" . }}

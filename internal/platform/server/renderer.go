@@ -13,8 +13,13 @@ type TemplateRenderer struct {
 }
 
 func NewTemplateRenderer(templateDir string) *TemplateRenderer {
-	templates := template.Must(template.ParseGlob(filepath.Join(templateDir, "*.html")))
-	templates := template.Must(template.ParseGlob(filepath.Join(templateDir, "views/*.html")))
+	templates := template.New("")
+
+	// Parse layout template first
+	templates = template.Must(templates.ParseGlob(filepath.Join(templateDir, "*.html")))
+
+	// Parse all view templates
+	templates = template.Must(templates.ParseGlob(filepath.Join(templateDir, "views/*.html")))
 
 	return &TemplateRenderer{
 		templates: templates,
