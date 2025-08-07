@@ -3,13 +3,16 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/aidityasadhakim/go-pos/internal/platform/database"
 	"github.com/labstack/echo/v4"
 )
 
-type AuthHandler struct{}
+type AuthHandler struct {
+	queries *database.Queries
+}
 
-func NewAuthHandler() *AuthHandler {
-	return &AuthHandler{}
+func NewAuthHandler(queries *database.Queries) *AuthHandler {
+	return &AuthHandler{queries: queries}
 }
 
 func (h *AuthHandler) Login(c echo.Context) error {

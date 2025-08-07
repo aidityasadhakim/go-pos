@@ -35,3 +35,28 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (Istanah
 	)
 	return i, err
 }
+
+const getUserByUsername = `-- name: GetUserByUsername :one
+SELECT id, role_id, name, username, password_hash, email, phone, is_active, last_login_at, created_at, updated_at, deleted_at FROM istanahp.users
+WHERE username = $1
+`
+
+func (q *Queries) GetUserByUsername(ctx context.Context, username string) (IstanahpUser, error) {
+	row := q.db.QueryRowContext(ctx, getUserByUsername, username)
+	var i IstanahpUser
+	err := row.Scan(
+		&i.ID,
+		&i.RoleID,
+		&i.Name,
+		&i.Username,
+		&i.PasswordHash,
+		&i.Email,
+		&i.Phone,
+		&i.IsActive,
+		&i.LastLoginAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
