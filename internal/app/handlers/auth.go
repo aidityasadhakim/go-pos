@@ -17,6 +17,7 @@ func (h *AuthHandler) Login(c echo.Context) error {
 }
 
 func (h *AuthHandler) Authenticate(c echo.Context) error {
+	return nil
 }
 
 func (h *AuthHandler) Logout(c echo.Context) error {
