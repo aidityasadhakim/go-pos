@@ -109,8 +109,6 @@ WHERE p.reorder_level > 0
   AND p.deleted_at IS NULL
 ORDER BY p.name ASC;
 
--- FIFO Cost Lot Management Queries
-
 -- name: CreateProductCostLot :one
 INSERT INTO istanahp.product_cost_lots (
     product_id,

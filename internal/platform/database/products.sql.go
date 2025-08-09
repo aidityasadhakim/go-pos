@@ -95,7 +95,6 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (I
 }
 
 const createProductCostLot = `-- name: CreateProductCostLot :one
-
 INSERT INTO istanahp.product_cost_lots (
     product_id,
     quantity,
@@ -117,7 +116,6 @@ type CreateProductCostLotParams struct {
 	ExpiresAt      sql.NullTime
 }
 
-// FIFO Cost Lot Management Queries
 func (q *Queries) CreateProductCostLot(ctx context.Context, arg CreateProductCostLotParams) (IstanahpProductCostLot, error) {
 	row := q.db.QueryRowContext(ctx, createProductCostLot,
 		arg.ProductID,
