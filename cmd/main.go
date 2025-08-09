@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/aidityasadhakim/go-pos/internal/app/routes"
+	"github.com/aidityasadhakim/go-pos/internal/platform/cache"
 	"github.com/aidityasadhakim/go-pos/internal/platform/database"
 	"github.com/aidityasadhakim/go-pos/internal/platform/server"
 	"github.com/joho/godotenv"
@@ -18,6 +19,11 @@ func main() {
 	queries, err := database.Connect()
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
+	}
+
+	// Initialize Redis
+	if err := cache.InitRedis(); err != nil {
+		log.Fatal("Failed to connect to Redis:", err)
 	}
 
 	e := echo.New()

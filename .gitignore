@@ -54,3 +54,4 @@ pids
 /views/**/*.go
 
 AGENTS.MD
+llm

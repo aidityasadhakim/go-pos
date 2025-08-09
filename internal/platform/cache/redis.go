@@ -1,10 +1,10 @@
-// Package database provides database connections and clients for PostgreSQL and Redis.
-package database
+// Package cache provides Redis cache functionality.
+package cache
 
 import (
 	"context"
 	"fmt"
-	"net"
+	"net/url"
 	"os"
 	"strconv"
 	"time"
@@ -15,28 +15,46 @@ import (
 var RedisClient *redis.Client
 
 func InitRedis() error {
-	password := os.Getenv("REDIS_PASSWORD")
 	redisURL := os.Getenv("REDIS_URL")
 	if redisURL == "" {
 		return fmt.Errorf("REDIS_URL environment variable is required")
 	}
 
-	// Parse the URL to get the host and port
-	host, portStr, err := net.SplitHostPort(redisURL)
+	// Parse Redis URL (e.g., redis://redis:6379/0)
+	parsedURL, err := url.Parse(redisURL)
 	if err != nil {
 		return fmt.Errorf("invalid REDIS_URL format: %w", err)
 	}
 
-	port, err := strconv.Atoi(portStr)
-	if err != nil {
-		return fmt.Errorf("invalid REDIS_URL port: %w", err)
+	// Extract components
+	host := parsedURL.Hostname()
+	port := parsedURL.Port()
+	if port == "" {
+		port = "6379" // Default Redis port
+	}
+
+	db := 0
+	if parsedURL.Path != "" && len(parsedURL.Path) > 1 {
+		if dbNum, err := strconv.Atoi(parsedURL.Path[1:]); err == nil {
+			db = dbNum
+		}
+	}
+
+	password := ""
+	if parsedURL.User != nil {
+		password, _ = parsedURL.User.Password()
+	}
+
+	// Override with env var if set
+	if envPassword := os.Getenv("REDIS_PASSWORD"); envPassword != "" {
+		password = envPassword
 	}
 
 	// Create a new Redis client
 	RedisClient = redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%d", host, port),
+		Addr:     fmt.Sprintf("%s:%s", host, port),
 		Password: password,
-		DB:       0,
+		DB:       db,
 	})
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
