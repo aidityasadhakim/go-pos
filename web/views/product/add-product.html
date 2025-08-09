@@ -1,38 +1,23 @@
-<!-- Add Product Modal -->
-<div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" 
-     x-data="{ open: true }" 
-     x-show="open"
-     x-transition:enter="ease-out duration-300"
-     x-transition:enter-start="opacity-0"
-     x-transition:enter-end="opacity-100"
-     x-transition:leave="ease-in duration-200"
-     x-transition:leave-start="opacity-100"
-     x-transition:leave-end="opacity-0">
-    
-    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white"
-         x-transition:enter="ease-out duration-300"
-         x-transition:enter-start="opacity-0 transform scale-95"
-         x-transition:enter-end="opacity-100 transform scale-100"
-         x-transition:leave="ease-in duration-200"
-         x-transition:leave-start="opacity-100 transform scale-100"
-         x-transition:leave-end="opacity-0 transform scale-95">
+<!-- Add Product Page -->
+<div class="container mx-auto px-4 py-8 max-w-6xl">
+    <div class="bg-white shadow-lg rounded-lg p-8">
         
-        <!-- Modal Header -->
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-2xl font-bold text-gray-900">Add New Product</h3>
-            <button class="text-gray-400 hover:text-gray-600 transition-colors"
-                    onclick="document.getElementById('modal-container').innerHTML = ''">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
+        <!-- Page Header -->
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Add New Product</h1>
+            <a href="/products" 
+               class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">
+                Back to Products
+            </a>
         </div>
 
         <!-- Product Form -->
         <form hx-post="/products" 
-              hx-target="#modal-container"
+              hx-target="body"
+              hx-swap="outerHTML"
               hx-ext="json-enc"
-              enctype="multipart/form-data">
+              enctype="multipart/form-data"
+              class="space-y-8">
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Left Column -->
@@ -192,14 +177,13 @@
             </div>
 
             <!-- Form Actions -->
-            <div class="flex justify-end space-x-3 mt-8 pt-6 border-t border-gray-200">
-                <button type="button" 
-                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
-                        onclick="document.getElementById('modal-container').innerHTML = ''">
+            <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                <a href="/products"
+                   class="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">
                     Cancel
-                </button>
+                </a>
                 <button type="submit" 
-                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                        class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
                     Add Product
                 </button>
             </div>

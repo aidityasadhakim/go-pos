@@ -5,107 +5,117 @@
     <div class="flex justify-between items-center mb-6">
         <div>
             <h1 class="text-3xl font-bold text-gray-900">Products</h1>
-            <p class="text-gray-600">Manage your product inventory</p>
         </div>
-        <button 
-            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-            hx-get="/products/add"
-            hx-target="#modal-container"
-            hx-trigger="click">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-            </svg>
+        <a href="/product/add" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
             Add Product
-        </button>
-    </div>
-
-    <!-- Filters Section -->
-    <div class="bg-white rounded-lg shadow mb-6 p-4">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <!-- Search -->
-            <div class="col-span-1 md:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Search Products</label>
-                <input 
-                    type="text" 
-                    name="search"
-                    placeholder="Search by name, SKU, or description..."
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    hx-get="/products/table"
-                    hx-target="#products-table-body"
-                    hx-trigger="keyup changed delay:500ms"
-                    hx-include="[name='category'], [name='status']">
-            </div>
-            
-            <!-- Category Filter -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                <select 
-                    name="category"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    hx-get="/products/table"
-                    hx-target="#products-table-body"
-                    hx-trigger="change"
-                    hx-include="[name='search'], [name='status']">
-                    <option value="">All Categories</option>
-                    {{range .Categories}}
-                    <option value="{{.ID}}">{{.Name}}</option>
-                    {{end}}
-                </select>
-            </div>
-            
-            <!-- Status Filter -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select 
-                    name="status"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    hx-get="/products/table"
-                    hx-target="#products-table-body"
-                    hx-trigger="change"
-                    hx-include="[name='search'], [name='category']">
-                    <option value="">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                    <option value="discontinued">Discontinued</option>
-                </select>
-            </div>
-        </div>
+        </a>
     </div>
 
     <!-- Products Table -->
     <div class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
+      <div class="p-4 border-b border-red-200 flex justify-between items-center">
+            <table id="products-table" class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                        {{if eq .UserRole "admin"}}
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cost</th>
-                        {{end}}
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider no-sort">Actions</th>
                     </tr>
                 </thead>
-                <tbody id="products-table-body" class="bg-white divide-y divide-gray-200">
-                    <!-- Initial load -->
-                    <tr hx-get="/products/table" hx-trigger="load" hx-target="#products-table-body">
-                        <td colspan="{{if eq .UserRole "admin"}}8{{else}}7{{end}}" class="px-6 py-12 text-center">
-                            <div class="flex justify-center">
-                                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {{ if eq .IstanaHpProducts nil }}
+                    <tr>
+                        <td colspan="{{if eq .UserRole "admin"}}8{{else}}7{{end}}" class="px-6 py-4 text-center text-gray-500">
+                            No products found.
+                        </td>
+                    </tr>
+                    {{else}}
+                    {{range .IstanaHpProducts}}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                    <div class="text-sm font-medium text-gray-900">{{.Name}}</div>
+                                    {{if .Description}}
+                                    <div class="text-sm text-gray-500 truncate max-w-xs">{{.Description}}</div>
+                                    {{end}}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-sm font-mono text-gray-900">{{.SKU}}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-sm text-gray-900">{{.CategoryName}}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap" data-order="{{.SalePrice}}">
+                            <span class="text-sm font-medium text-gray-900">${{printf "%.2f" .SalePrice}}</span>
+                        </td>
+                        {{if eq $.UserRole "admin"}}
+                        <td class="px-6 py-4 whitespace-nowrap" data-order="{{.CostPrice}}">
+                            <span class="text-sm text-gray-600">${{printf "%.2f" .CostPrice}}</span>
+                        </td>
+                        {{end}}
+                        <td class="px-6 py-4 whitespace-nowrap" data-order="{{.StockQuantity}}">
+                            <div class="flex items-center">
+                                <span class="text-sm text-gray-900 mr-2">{{.StockQuantity}}</span>
+                                {{if lt .StockQuantity .ReorderLevel}}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    Low Stock
+                                </span>
+                                {{else if eq .StockQuantity 0}}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                    Out of Stock
+                                </span>
+                                {{end}}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {{if eq .IsActive "active"}}
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                Active
+                            </span>
+                            {{else if eq .IsActive "inactive"}}
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                Inactive
+                            </span>
+                            {{else if eq .IsActive "discontinued"}}
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                Discontinued
+                            </span>
+                            {{end}}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex items-center space-x-2">
+                                <!-- Edit Button -->
+                                <button 
+                                    class="text-green-600 hover:text-green-900 transition-colors"
+                                    hx-get="/products/{{.ID}}/edit"
+                                    hx-target="#modal-container"
+                                    title="Edit Product">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                    </svg>
+                                </button>
+                                
+                                <!-- Delete Button -->
+                                <button 
+                                    class="text-red-600 hover:text-red-900 transition-colors"
+                                    onclick="deleteProduct({{.ID}}, this)"
+                                    title="Delete Product">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
                             </div>
                         </td>
                     </tr>
-                </tbody>
+                    {{end}}
+
+                    {{end}}
+                          </tbody>
             </table>
-        </div>
-        
-        <!-- Load More Button -->
-        <div id="load-more-container" class="px-6 py-4 border-t border-gray-200 text-center">
-            <!-- Will be populated by HTMX -->
         </div>
     </div>
 </div>
@@ -119,7 +129,104 @@
 {{ template "footer-body.html"  . }}
 
 <script>
-  alert("hello world")
+$(document).ready(function() {
+    // Initialize DataTables
+    var table = $('#products-table').DataTable({
+        responsive: true,
+        pageLength: 25,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+        order: [[0, 'asc']], // Sort by product name by default
+        columnDefs: [
+            {
+                targets: 'no-sort',
+                orderable: false,
+                searchable: false
+            },
+            {
+                targets: [3{{if eq .UserRole "admin"}}, 4{{end}}, 5], // Price, Cost (if admin), Stock columns
+                type: 'num'
+            }
+        ],
+        language: {
+            search: "Search products:",
+            lengthMenu: "Show _MENU_ products per page",
+            info: "Showing _START_ to _END_ of _TOTAL_ products",
+            infoEmpty: "No products found",
+            infoFiltered: "(filtered from _MAX_ total products)",
+            zeroRecords: "No matching products found",
+            emptyTable: "No products available",
+            paginate: {
+                first: "First",
+                last: "Last",
+                next: "Next",
+                previous: "Previous"
+            }
+        },
+        dom: '<"flex flex-col sm:flex-row justify-between items-center mb-4"<"mb-2 sm:mb-0"l><"mb-2 sm:mb-0"f>>rtip',
+        initComplete: function() {
+            // Custom styling for DataTables elements
+            $('.dataTables_length select').addClass('px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500');
+            $('.dataTables_filter input').addClass('px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500').attr('placeholder', 'Search products...');
+            $('.dataTables_length label').addClass('text-sm text-gray-700');
+            $('.dataTables_filter label').addClass('text-sm text-gray-700');
+        }
+    });
+
+    // Custom category filter
+    $('#category-filter').on('change', function() {
+        var val = $.fn.dataTable.util.escapeRegex($(this).val());
+        table.column(2).search(val ? '^' + val + '$' : '', true, false).draw();
+    });
+
+    // Custom status filter  
+    $('#status-filter').on('change', function() {
+        var val = $.fn.dataTable.util.escapeRegex($(this).val());
+        table.column(6).search(val ? val : '', true, false).draw();
+    });
+});
+
+// Delete product function
+function deleteProduct(productId, buttonElement) {
+    if (confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+        fetch(`/products/${productId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remove the row from DataTables
+                var table = $('#products-table').DataTable();
+                table.row($(buttonElement).closest('tr')).remove().draw();
+                
+                // Show success message
+                showMessage('Product deleted successfully', 'success');
+            } else {
+                showMessage('Error deleting product: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage('Error deleting product', 'error');
+        });
+    }
+}
+
+// Show message function
+function showMessage(message, type) {
+    const messageContainer = document.getElementById('message-container');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `p-4 rounded-md mb-4 ${type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`;
+    messageDiv.textContent = message;
+    
+    messageContainer.appendChild(messageDiv);
+    
+    setTimeout(() => {
+        messageDiv.remove();
+    }, 5000);
+}
 </script>
 
 {{template "footer.html" .}}

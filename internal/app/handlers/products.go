@@ -58,3 +58,26 @@ func (h *ProductsHandler) Index(c echo.Context) error {
 
 	return c.Render(200, "products.html", data)
 }
+
+func (h *ProductsHandler) Create(c echo.Context) error {
+	user := middleware.GetSessionUser(c)
+
+	if user == nil {
+		return c.Redirect(302, "/login")
+	}
+
+	productCategories, err := h.queries.GetProductCategories(context.Background())
+	if err != nil {
+		return c.HTML(400, "Error fetching product categories: "+err.Error())
+	}
+
+	data := ProductsPageData{
+		UserName:         user.Username,
+		UserRole:         middleware.GetRoleName(user.RoleID),
+		UserLevel:        user.RoleID,
+		IstanaHpProducts: []database.IstanahpProduct{},
+		Categories:       productCategories,
+	}
+
+	return c.Render(200, "add-product.html", data)
+}

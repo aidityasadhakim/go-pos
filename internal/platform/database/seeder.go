@@ -29,6 +29,10 @@ func (s *Seeder) SeedAll() error {
 		return fmt.Errorf("failed to seed superadmin: %w", err)
 	}
 
+	if err := s.seedProductCategories(); err != nil {
+		return fmt.Errorf("failed to seed product categories: %w", err)
+	}
+
 	log.Println("Database seeding completed successfully!")
 	return nil
 }
@@ -114,6 +118,32 @@ func (s *Seeder) seedSuperAdmin() error {
 	log.Printf("Username: superadmin")
 	log.Printf("Password: %s", defaultPassword)
 	log.Println("⚠️  Please change the default password after first login!")
+
+	return nil
+}
+
+func (s *Seeder) seedProductCategories() error {
+	log.Println("Seeding product categories...")
+
+	categories := []string{
+		"Accessories",
+		"Part",
+		"Unit",
+		"Tools",
+	}
+
+	for _, category := range categories {
+		query := `
+			INSERT INTO istanahp.product_categories (name)
+			VALUES ($1)
+			ON CONFLICT (name) DO NOTHING
+		`
+		_, err := s.db.Exec(query, category)
+		if err != nil {
+			return fmt.Errorf("failed to insert category %s: %w", category, err)
+		}
+		log.Printf("Category '%s' seeded successfully", category)
+	}
 
 	return nil
 }
