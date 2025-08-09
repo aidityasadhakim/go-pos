@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS istanahp.tax_rates (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(100) UNIQUE NOT NULL, -- e.g., 'Sales Tax', 'VAT'
-    percentage DECIMAL(5, 2) NOT NULL, -- e.g., 0.0825 for 8.25%
+    percentage NUMERIC(19,2) NOT NULL, -- e.g., 0.0825 for 8.25%
     is_default BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,

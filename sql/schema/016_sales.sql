@@ -12,12 +12,12 @@ CREATE TABLE IF NOT EXISTS istanahp.sales (
     invoice_number VARCHAR(100) UNIQUE NOT NULL DEFAULT '', -- Unique sales code/invoice number
     transaction_date TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     customer_display_name VARCHAR(255), -- For walk-in customers or custom names
-    total_amount DECIMAL(10, 2) NOT NULL, -- Gross total
-    total_discount_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00, -- Total discount applied to the sale
-    total_tax_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00, -- Total tax collected
+    total_amount NUMERIC(19,2) NOT NULL, -- Gross total
+    total_discount_amount NUMERIC(19,2) NOT NULL DEFAULT 0.00, -- Total discount applied to the sale
+    total_tax_amount NUMERIC(19,2) NOT NULL DEFAULT 0.00, -- Total tax collected
 
-    amount_tendered DECIMAL(10, 2), -- Amount customer paid (cash/card)
-    change_given DECIMAL(10, 2),    -- Change due to customer
+    amount_tendered NUMERIC(19,2), -- Amount customer paid (cash/card)
+    change_given NUMERIC(19,2),    -- Change due to customer
     payment_at TIMESTAMPTZ,         -- When payment was actually completed
     note TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,

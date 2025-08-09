@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS istanahp.transaction_payments (
     transaction_id BIGSERIAL NOT NULL,          -- Refers to sales.id or purchases.id
     payment_method_id BIGSERIAL NOT NULL,       -- Foreign Key to payment_methods
     user_id UUID NOT NULL,                 -- User who recorded the payment
-    amount DECIMAL(10, 2) NOT NULL,
+    amount NUMERIC(19,2) NOT NULL,
     payment_date TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     note TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -8,8 +8,8 @@ CREATE TABLE IF NOT EXISTS istanahp.purchases (
 
     order_number VARCHAR(100) UNIQUE NOT NULL DEFAULT '', -- Unique purchase order number
     transaction_date TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    total_amount DECIMAL(10, 2) NOT NULL, -- Total cost of the purchase
-    amount_paid DECIMAL(10, 2) NOT NULL DEFAULT 0.00, -- Amount paid to supplier
+    total_amount NUMERIC(19,2) NOT NULL, -- Total cost of the purchase
+    amount_paid NUMERIC(19,2) NOT NULL DEFAULT 0.00, -- Amount paid to supplier
     note TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,

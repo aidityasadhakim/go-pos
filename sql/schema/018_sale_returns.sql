@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS istanahp.sale_returns (
     user_id UUID NOT NULL,       -- User processing the return
     return_date TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     quantity INTEGER NOT NULL,
-    returned_amount DECIMAL(10, 2) NOT NULL, -- Monetary amount credited/returned for this item
+    returned_amount NUMERIC(19,2) NOT NULL, -- Monetary amount credited/returned for this item
     reason TEXT NOT NULL,
     is_restocked BOOLEAN NOT NULL DEFAULT FALSE, -- If the item was put back into inventory
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,

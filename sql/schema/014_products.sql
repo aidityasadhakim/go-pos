@@ -7,9 +7,10 @@ CREATE TABLE IF NOT EXISTS istanahp.products (
     sku VARCHAR(100) UNIQUE NOT NULL, -- Stock Keeping Unit
     barcode VARCHAR(255) UNIQUE, -- If different from SKU, e.g., EAN/UPC
     description TEXT,
-    cost_price DECIMAL(10, 2) NOT NULL, -- The base cost of the product
-    retail_price DECIMAL(10, 2) NOT NULL, -- The default selling price
+    cost_price NUMERIC(19,2) NOT NULL, -- The base cost of the product
+    retail_price NUMERIC(19,2) NOT NULL, -- The default selling price
     -- sale_price_non or alternate_retail_price might be added back if tiered pricing is needed
+    customer_price NUMERIC(19,2), -- Price for specific customers or groups
     reorder_level INTEGER NOT NULL DEFAULT 0, -- Min stock before reordering
     is_active BOOLEAN NOT NULL DEFAULT TRUE, -- For soft deleting products
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,

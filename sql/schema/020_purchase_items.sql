@@ -2,8 +2,8 @@
 CREATE TABLE IF NOT EXISTS istanahp.purchase_items (
     id BIGSERIAL PRIMARY KEY,
     purchase_id BIGSERIAL NOT NULL,   -- Foreign Key to purchases
-    product_id BIGSERIAL NOT NULL,    -- Foreign Key to products quantity INTEGER NOT NULL, unit_cost DECIMAL(10, 2) NOT NULL, -- Cost per unit at time of purchase
-    line_item_total DECIMAL(10, 2) NOT NULL, -- quantity * unit_cost
+    product_id BIGSERIAL NOT NULL,    -- Foreign Key to products quantity INTEGER NOT NULL, unit_cost NUMERIC(19,2) NOT NULL, -- Cost per unit at time of purchase
+    line_item_total NUMERIC(19,2) NOT NULL, -- quantity * unit_cost
     FOREIGN KEY (purchase_id) REFERENCES istanahp.purchases(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES istanahp.products(id)
 );
