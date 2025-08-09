@@ -83,20 +83,20 @@ type IstanahpPaymentMethod struct {
 
 // Main product catalog with details.
 type IstanahpProduct struct {
-	ID           int64
-	CategoryID   sql.NullInt64
-	TaxRateID    sql.NullInt64
-	Name         string
-	Sku          string
-	Barcode      sql.NullString
-	Description  sql.NullString
-	CostPrice    string
-	RetailPrice  string
-	ReorderLevel int32
-	IsActive     bool
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	DeletedAt    sql.NullTime
+	ID            int64
+	CategoryID    sql.NullInt64
+	TaxRateID     sql.NullInt64
+	Name          string
+	Sku           string
+	Description   sql.NullString
+	CostPrice     string
+	RetailPrice   string
+	CustomerPrice sql.NullString
+	ReorderLevel  int32
+	IsActive      bool
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	DeletedAt     sql.NullTime
 }
 
 // Defines categories for products/items.

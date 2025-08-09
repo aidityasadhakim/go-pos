@@ -7,42 +7,20 @@ package database
 
 import (
 	"context"
-	"database/sql"
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO istanahp.roles (name, description)
-VALUES ($1, $2)
-ON CONFLICT (name) DO NOTHING
-RETURNING id, name, description, created_at, updated_at, deleted_at
-`
 
-type CreateUserParams struct {
-	Name        string
-	Description sql.NullString
-}
-
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (IstanahpRole, error) {
-	row := q.db.QueryRowContext(ctx, createUser, arg.Name, arg.Description)
-	var i IstanahpRole
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Description,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
-}
-
-const getUserByUsername = `-- name: GetUserByUsername :one
 SELECT id, role_id, name, username, password_hash, email, phone, is_active, last_login_at, created_at, updated_at, deleted_at FROM istanahp.users
 WHERE username = $1
 `
 
-func (q *Queries) GetUserByUsername(ctx context.Context, username string) (IstanahpUser, error) {
-	row := q.db.QueryRowContext(ctx, getUserByUsername, username)
+// INSERT INTO istanahp.users (name, description)
+// VALUES ($1, $2)
+// ON CONFLICT (name) DO NOTHING
+// RETURNING *;
+func (q *Queries) CreateUser(ctx context.Context, username string) (IstanahpUser, error) {
+	row := q.db.QueryRowContext(ctx, createUser, username)
 	var i IstanahpUser
 	err := row.Scan(
 		&i.ID,

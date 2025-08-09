@@ -1,3 +1,4 @@
+// Package server provides a custom template renderer for Echo framework.
 package server
 
 import (
