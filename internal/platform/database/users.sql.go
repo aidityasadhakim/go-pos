@@ -8,7 +8,21 @@ package database
 import (
 	"context"
 	"database/sql"
+
+	"github.com/google/uuid"
 )
+
+const countCustomers = `-- name: CountCustomers :one
+SELECT COUNT(*) FROM istanahp.customers
+WHERE deleted_at IS NULL
+`
+
+func (q *Queries) CountCustomers(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countCustomers)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO istanahp.users (role_id, name, username, password_hash, email, phone)
@@ -35,6 +49,50 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (Istanah
 		arg.Email,
 		arg.Phone,
 	)
+	var i IstanahpUser
+	err := row.Scan(
+		&i.ID,
+		&i.RoleID,
+		&i.Name,
+		&i.Username,
+		&i.PasswordHash,
+		&i.Email,
+		&i.Phone,
+		&i.IsActive,
+		&i.LastLoginAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const getRoleByID = `-- name: GetRoleByID :one
+SELECT id, name, description, created_at, updated_at, deleted_at FROM istanahp.roles
+WHERE id = $1 AND deleted_at IS NULL
+`
+
+func (q *Queries) GetRoleByID(ctx context.Context, id int64) (IstanahpRole, error) {
+	row := q.db.QueryRowContext(ctx, getRoleByID, id)
+	var i IstanahpRole
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const getUserByID = `-- name: GetUserByID :one
+SELECT id, role_id, name, username, password_hash, email, phone, is_active, last_login_at, created_at, updated_at, deleted_at FROM istanahp.users
+WHERE id = $1 AND deleted_at IS NULL
+`
+
+func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (IstanahpUser, error) {
+	row := q.db.QueryRowContext(ctx, getUserByID, id)
 	var i IstanahpUser
 	err := row.Scan(
 		&i.ID,

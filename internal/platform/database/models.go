@@ -89,7 +89,6 @@ type IstanahpProduct struct {
 	Name          string
 	Sku           string
 	Description   sql.NullString
-	CostPrice     string
 	RetailPrice   string
 	CustomerPrice sql.NullString
 	ReorderLevel  int32
@@ -107,6 +106,19 @@ type IstanahpProductCategory struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	DeletedAt   sql.NullTime
+}
+
+// Tracks individual batches of products for cost of goods sold calculations (e.g., FIFO).
+type IstanahpProductCostLot struct {
+	ID             int64
+	ProductID      int64
+	Quantity       int32
+	UnitCost       string
+	PurchaseItemID sql.NullInt64
+	ReceivedAt     time.Time
+	ExpiresAt      sql.NullTime
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 }
 
 // Records purchase orders from suppliers.

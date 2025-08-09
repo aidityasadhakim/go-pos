@@ -42,14 +42,13 @@ INSERT INTO istanahp.products (
     name,
     sku,
     description,
-    cost_price,
     retail_price,
     customer_price,
     reorder_level,
     is_active
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
-) RETURNING id, category_id, tax_rate_id, name, sku, description, cost_price, retail_price, customer_price, reorder_level, is_active, created_at, updated_at, deleted_at
+    $1, $2, $3, $4, $5, $6, $7, $8, $9
+) RETURNING id, category_id, tax_rate_id, name, sku, description, retail_price, customer_price, reorder_level, is_active, created_at, updated_at, deleted_at
 `
 
 type CreateProductParams struct {
@@ -58,7 +57,6 @@ type CreateProductParams struct {
 	Name          string
 	Sku           string
 	Description   sql.NullString
-	CostPrice     string
 	RetailPrice   string
 	CustomerPrice sql.NullString
 	ReorderLevel  int32
@@ -72,7 +70,6 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (I
 		arg.Name,
 		arg.Sku,
 		arg.Description,
-		arg.CostPrice,
 		arg.RetailPrice,
 		arg.CustomerPrice,
 		arg.ReorderLevel,
@@ -86,7 +83,6 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (I
 		&i.Name,
 		&i.Sku,
 		&i.Description,
-		&i.CostPrice,
 		&i.RetailPrice,
 		&i.CustomerPrice,
 		&i.ReorderLevel,
@@ -94,6 +90,54 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (I
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const createProductCostLot = `-- name: CreateProductCostLot :one
+
+INSERT INTO istanahp.product_cost_lots (
+    product_id,
+    quantity,
+    unit_cost,
+    purchase_item_id,
+    received_at,
+    expires_at
+) VALUES (
+    $1, $2, $3, $4, $5, $6
+) RETURNING id, product_id, quantity, unit_cost, purchase_item_id, received_at, expires_at, created_at, updated_at
+`
+
+type CreateProductCostLotParams struct {
+	ProductID      int64
+	Quantity       int32
+	UnitCost       string
+	PurchaseItemID sql.NullInt64
+	ReceivedAt     time.Time
+	ExpiresAt      sql.NullTime
+}
+
+// FIFO Cost Lot Management Queries
+func (q *Queries) CreateProductCostLot(ctx context.Context, arg CreateProductCostLotParams) (IstanahpProductCostLot, error) {
+	row := q.db.QueryRowContext(ctx, createProductCostLot,
+		arg.ProductID,
+		arg.Quantity,
+		arg.UnitCost,
+		arg.PurchaseItemID,
+		arg.ReceivedAt,
+		arg.ExpiresAt,
+	)
+	var i IstanahpProductCostLot
+	err := row.Scan(
+		&i.ID,
+		&i.ProductID,
+		&i.Quantity,
+		&i.UnitCost,
+		&i.PurchaseItemID,
+		&i.ReceivedAt,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -108,8 +152,111 @@ func (q *Queries) DeleteProduct(ctx context.Context, id int64) error {
 	return err
 }
 
+const getCostLotsByDateRange = `-- name: GetCostLotsByDateRange :many
+SELECT pcl.id, pcl.product_id, pcl.quantity, pcl.unit_cost, pcl.purchase_item_id, pcl.received_at, pcl.expires_at, pcl.created_at, pcl.updated_at, p.name as product_name, p.sku
+FROM istanahp.product_cost_lots pcl
+JOIN istanahp.products p ON pcl.product_id = p.id
+WHERE pcl.received_at BETWEEN $1 AND $2
+ORDER BY pcl.received_at DESC
+`
+
+type GetCostLotsByDateRangeParams struct {
+	ReceivedAt   time.Time
+	ReceivedAt_2 time.Time
+}
+
+type GetCostLotsByDateRangeRow struct {
+	ID             int64
+	ProductID      int64
+	Quantity       int32
+	UnitCost       string
+	PurchaseItemID sql.NullInt64
+	ReceivedAt     time.Time
+	ExpiresAt      sql.NullTime
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	ProductName    string
+	Sku            string
+}
+
+func (q *Queries) GetCostLotsByDateRange(ctx context.Context, arg GetCostLotsByDateRangeParams) ([]GetCostLotsByDateRangeRow, error) {
+	rows, err := q.db.QueryContext(ctx, getCostLotsByDateRange, arg.ReceivedAt, arg.ReceivedAt_2)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetCostLotsByDateRangeRow
+	for rows.Next() {
+		var i GetCostLotsByDateRangeRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProductID,
+			&i.Quantity,
+			&i.UnitCost,
+			&i.PurchaseItemID,
+			&i.ReceivedAt,
+			&i.ExpiresAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ProductName,
+			&i.Sku,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getExpiredCostLots = `-- name: GetExpiredCostLots :many
+SELECT id, product_id, quantity, unit_cost, purchase_item_id, received_at, expires_at, created_at, updated_at FROM istanahp.product_cost_lots
+WHERE expires_at IS NOT NULL 
+  AND expires_at < CURRENT_DATE 
+  AND quantity > 0
+ORDER BY expires_at ASC
+`
+
+func (q *Queries) GetExpiredCostLots(ctx context.Context) ([]IstanahpProductCostLot, error) {
+	rows, err := q.db.QueryContext(ctx, getExpiredCostLots)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []IstanahpProductCostLot
+	for rows.Next() {
+		var i IstanahpProductCostLot
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProductID,
+			&i.Quantity,
+			&i.UnitCost,
+			&i.PurchaseItemID,
+			&i.ReceivedAt,
+			&i.ExpiresAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getLowStockProducts = `-- name: GetLowStockProducts :many
-SELECT p.id, p.category_id, p.tax_rate_id, p.name, p.sku, p.description, p.cost_price, p.retail_price, p.customer_price, p.reorder_level, p.is_active, p.created_at, p.updated_at, p.deleted_at, il.current_stock 
+SELECT p.id, p.category_id, p.tax_rate_id, p.name, p.sku, p.description, p.retail_price, p.customer_price, p.reorder_level, p.is_active, p.created_at, p.updated_at, p.deleted_at, il.current_stock 
 FROM istanahp.products p
 JOIN istanahp.inventory_levels il ON p.id = il.product_id
 WHERE p.reorder_level > 0 
@@ -126,7 +273,6 @@ type GetLowStockProductsRow struct {
 	Name          string
 	Sku           string
 	Description   sql.NullString
-	CostPrice     string
 	RetailPrice   string
 	CustomerPrice sql.NullString
 	ReorderLevel  int32
@@ -153,7 +299,6 @@ func (q *Queries) GetLowStockProducts(ctx context.Context) ([]GetLowStockProduct
 			&i.Name,
 			&i.Sku,
 			&i.Description,
-			&i.CostPrice,
 			&i.RetailPrice,
 			&i.CustomerPrice,
 			&i.ReorderLevel,
@@ -176,8 +321,34 @@ func (q *Queries) GetLowStockProducts(ctx context.Context) ([]GetLowStockProduct
 	return items, nil
 }
 
+const getOldestCostLot = `-- name: GetOldestCostLot :one
+
+SELECT id, product_id, quantity, unit_cost, purchase_item_id, received_at, expires_at, created_at, updated_at FROM istanahp.product_cost_lots
+WHERE product_id = $1 AND quantity > 0
+ORDER BY received_at ASC
+LIMIT 1
+`
+
+// FIFO ordering
+func (q *Queries) GetOldestCostLot(ctx context.Context, productID int64) (IstanahpProductCostLot, error) {
+	row := q.db.QueryRowContext(ctx, getOldestCostLot, productID)
+	var i IstanahpProductCostLot
+	err := row.Scan(
+		&i.ID,
+		&i.ProductID,
+		&i.Quantity,
+		&i.UnitCost,
+		&i.PurchaseItemID,
+		&i.ReceivedAt,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getProduct = `-- name: GetProduct :one
-SELECT id, category_id, tax_rate_id, name, sku, description, cost_price, retail_price, customer_price, reorder_level, is_active, created_at, updated_at, deleted_at FROM istanahp.products
+SELECT id, category_id, tax_rate_id, name, sku, description, retail_price, customer_price, reorder_level, is_active, created_at, updated_at, deleted_at FROM istanahp.products
 WHERE id = $1 AND deleted_at IS NULL
 `
 
@@ -191,7 +362,6 @@ func (q *Queries) GetProduct(ctx context.Context, id int64) (IstanahpProduct, er
 		&i.Name,
 		&i.Sku,
 		&i.Description,
-		&i.CostPrice,
 		&i.RetailPrice,
 		&i.CustomerPrice,
 		&i.ReorderLevel,
@@ -204,7 +374,7 @@ func (q *Queries) GetProduct(ctx context.Context, id int64) (IstanahpProduct, er
 }
 
 const getProductBySKU = `-- name: GetProductBySKU :one
-SELECT id, category_id, tax_rate_id, name, sku, description, cost_price, retail_price, customer_price, reorder_level, is_active, created_at, updated_at, deleted_at FROM istanahp.products
+SELECT id, category_id, tax_rate_id, name, sku, description, retail_price, customer_price, reorder_level, is_active, created_at, updated_at, deleted_at FROM istanahp.products
 WHERE sku = $1 AND deleted_at IS NULL
 `
 
@@ -218,7 +388,6 @@ func (q *Queries) GetProductBySKU(ctx context.Context, sku string) (IstanahpProd
 		&i.Name,
 		&i.Sku,
 		&i.Description,
-		&i.CostPrice,
 		&i.RetailPrice,
 		&i.CustomerPrice,
 		&i.ReorderLevel,
@@ -230,8 +399,106 @@ func (q *Queries) GetProductBySKU(ctx context.Context, sku string) (IstanahpProd
 	return i, err
 }
 
+const getProductCategories = `-- name: GetProductCategories :many
+SELECT id, name, description, created_at, updated_at, deleted_at FROM istanahp.product_categories
+WHERE deleted_at IS NULL
+`
+
+func (q *Queries) GetProductCategories(ctx context.Context) ([]IstanahpProductCategory, error) {
+	rows, err := q.db.QueryContext(ctx, getProductCategories)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []IstanahpProductCategory
+	for rows.Next() {
+		var i IstanahpProductCategory
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getProductCostLot = `-- name: GetProductCostLot :one
+SELECT id, product_id, quantity, unit_cost, purchase_item_id, received_at, expires_at, created_at, updated_at FROM istanahp.product_cost_lots
+WHERE id = $1
+`
+
+func (q *Queries) GetProductCostLot(ctx context.Context, id int64) (IstanahpProductCostLot, error) {
+	row := q.db.QueryRowContext(ctx, getProductCostLot, id)
+	var i IstanahpProductCostLot
+	err := row.Scan(
+		&i.ID,
+		&i.ProductID,
+		&i.Quantity,
+		&i.UnitCost,
+		&i.PurchaseItemID,
+		&i.ReceivedAt,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getProductCostSummary = `-- name: GetProductCostSummary :one
+SELECT 
+    p.id,
+    p.name,
+    p.sku,
+    COALESCE(SUM(pcl.quantity), 0) as total_quantity,
+    COALESCE(SUM(pcl.quantity * pcl.unit_cost), 0) as total_value,
+    CASE 
+        WHEN SUM(pcl.quantity) > 0 
+        THEN SUM(pcl.quantity * pcl.unit_cost) / SUM(pcl.quantity)
+        ELSE 0 
+    END as weighted_avg_cost
+FROM istanahp.products p
+LEFT JOIN istanahp.product_cost_lots pcl ON p.id = pcl.product_id AND pcl.quantity > 0
+WHERE p.id = $1 AND p.deleted_at IS NULL
+GROUP BY p.id, p.name, p.sku
+`
+
+type GetProductCostSummaryRow struct {
+	ID              int64
+	Name            string
+	Sku             string
+	TotalQuantity   interface{}
+	TotalValue      interface{}
+	WeightedAvgCost int32
+}
+
+func (q *Queries) GetProductCostSummary(ctx context.Context, id int64) (GetProductCostSummaryRow, error) {
+	row := q.db.QueryRowContext(ctx, getProductCostSummary, id)
+	var i GetProductCostSummaryRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Sku,
+		&i.TotalQuantity,
+		&i.TotalValue,
+		&i.WeightedAvgCost,
+	)
+	return i, err
+}
+
 const listActiveProducts = `-- name: ListActiveProducts :many
-SELECT id, category_id, tax_rate_id, name, sku, description, cost_price, retail_price, customer_price, reorder_level, is_active, created_at, updated_at, deleted_at FROM istanahp.products
+SELECT id, category_id, tax_rate_id, name, sku, description, retail_price, customer_price, reorder_level, is_active, created_at, updated_at, deleted_at FROM istanahp.products
 WHERE is_active = TRUE AND deleted_at IS NULL
 ORDER BY name ASC
 `
@@ -252,7 +519,6 @@ func (q *Queries) ListActiveProducts(ctx context.Context) ([]IstanahpProduct, er
 			&i.Name,
 			&i.Sku,
 			&i.Description,
-			&i.CostPrice,
 			&i.RetailPrice,
 			&i.CustomerPrice,
 			&i.ReorderLevel,
@@ -274,8 +540,47 @@ func (q *Queries) ListActiveProducts(ctx context.Context) ([]IstanahpProduct, er
 	return items, nil
 }
 
+const listProductCostLots = `-- name: ListProductCostLots :many
+SELECT id, product_id, quantity, unit_cost, purchase_item_id, received_at, expires_at, created_at, updated_at FROM istanahp.product_cost_lots
+WHERE product_id = $1 AND quantity > 0
+ORDER BY received_at ASC
+`
+
+func (q *Queries) ListProductCostLots(ctx context.Context, productID int64) ([]IstanahpProductCostLot, error) {
+	rows, err := q.db.QueryContext(ctx, listProductCostLots, productID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []IstanahpProductCostLot
+	for rows.Next() {
+		var i IstanahpProductCostLot
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProductID,
+			&i.Quantity,
+			&i.UnitCost,
+			&i.PurchaseItemID,
+			&i.ReceivedAt,
+			&i.ExpiresAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listProducts = `-- name: ListProducts :many
-SELECT id, category_id, tax_rate_id, name, sku, description, cost_price, retail_price, customer_price, reorder_level, is_active, created_at, updated_at, deleted_at FROM istanahp.products
+SELECT id, category_id, tax_rate_id, name, sku, description, retail_price, customer_price, reorder_level, is_active, created_at, updated_at, deleted_at FROM istanahp.products
 WHERE deleted_at IS NULL
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2
@@ -302,7 +607,6 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]I
 			&i.Name,
 			&i.Sku,
 			&i.Description,
-			&i.CostPrice,
 			&i.RetailPrice,
 			&i.CustomerPrice,
 			&i.ReorderLevel,
@@ -325,7 +629,7 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]I
 }
 
 const listProductsByCategory = `-- name: ListProductsByCategory :many
-SELECT id, category_id, tax_rate_id, name, sku, description, cost_price, retail_price, customer_price, reorder_level, is_active, created_at, updated_at, deleted_at FROM istanahp.products
+SELECT id, category_id, tax_rate_id, name, sku, description, retail_price, customer_price, reorder_level, is_active, created_at, updated_at, deleted_at FROM istanahp.products
 WHERE category_id = $1 AND deleted_at IS NULL
 ORDER BY name ASC
 `
@@ -346,7 +650,6 @@ func (q *Queries) ListProductsByCategory(ctx context.Context, categoryID sql.Nul
 			&i.Name,
 			&i.Sku,
 			&i.Description,
-			&i.CostPrice,
 			&i.RetailPrice,
 			&i.CustomerPrice,
 			&i.ReorderLevel,
@@ -369,7 +672,7 @@ func (q *Queries) ListProductsByCategory(ctx context.Context, categoryID sql.Nul
 }
 
 const searchProducts = `-- name: SearchProducts :many
-SELECT id, category_id, tax_rate_id, name, sku, description, cost_price, retail_price, customer_price, reorder_level, is_active, created_at, updated_at, deleted_at FROM istanahp.products
+SELECT id, category_id, tax_rate_id, name, sku, description, retail_price, customer_price, reorder_level, is_active, created_at, updated_at, deleted_at FROM istanahp.products
 WHERE (
     name ILIKE '%' || $1 || '%' OR
     sku ILIKE '%' || $1 || '%' OR
@@ -401,7 +704,6 @@ func (q *Queries) SearchProducts(ctx context.Context, arg SearchProductsParams) 
 			&i.Name,
 			&i.Sku,
 			&i.Description,
-			&i.CostPrice,
 			&i.RetailPrice,
 			&i.CustomerPrice,
 			&i.ReorderLevel,
@@ -436,6 +738,37 @@ func (q *Queries) SoftDeleteProduct(ctx context.Context, id int64) error {
 	return err
 }
 
+const updateCostLotQuantity = `-- name: UpdateCostLotQuantity :one
+UPDATE istanahp.product_cost_lots
+SET 
+    quantity = $2,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1
+RETURNING id, product_id, quantity, unit_cost, purchase_item_id, received_at, expires_at, created_at, updated_at
+`
+
+type UpdateCostLotQuantityParams struct {
+	ID       int64
+	Quantity int32
+}
+
+func (q *Queries) UpdateCostLotQuantity(ctx context.Context, arg UpdateCostLotQuantityParams) (IstanahpProductCostLot, error) {
+	row := q.db.QueryRowContext(ctx, updateCostLotQuantity, arg.ID, arg.Quantity)
+	var i IstanahpProductCostLot
+	err := row.Scan(
+		&i.ID,
+		&i.ProductID,
+		&i.Quantity,
+		&i.UnitCost,
+		&i.PurchaseItemID,
+		&i.ReceivedAt,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const updateProduct = `-- name: UpdateProduct :one
 UPDATE istanahp.products
 SET 
@@ -444,14 +777,13 @@ SET
     name = $4,
     sku = $5,
     description = $6,
-    cost_price = $7,
-    retail_price = $8,
-    customer_price = $9,
-    reorder_level = $10,
-    is_active = $11,
+    retail_price = $7,
+    customer_price = $8,
+    reorder_level = $9,
+    is_active = $10,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND deleted_at IS NULL
-RETURNING id, category_id, tax_rate_id, name, sku, description, cost_price, retail_price, customer_price, reorder_level, is_active, created_at, updated_at, deleted_at
+RETURNING id, category_id, tax_rate_id, name, sku, description, retail_price, customer_price, reorder_level, is_active, created_at, updated_at, deleted_at
 `
 
 type UpdateProductParams struct {
@@ -461,7 +793,6 @@ type UpdateProductParams struct {
 	Name          string
 	Sku           string
 	Description   sql.NullString
-	CostPrice     string
 	RetailPrice   string
 	CustomerPrice sql.NullString
 	ReorderLevel  int32
@@ -476,7 +807,6 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (I
 		arg.Name,
 		arg.Sku,
 		arg.Description,
-		arg.CostPrice,
 		arg.RetailPrice,
 		arg.CustomerPrice,
 		arg.ReorderLevel,
@@ -490,7 +820,6 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (I
 		&i.Name,
 		&i.Sku,
 		&i.Description,
-		&i.CostPrice,
 		&i.RetailPrice,
 		&i.CustomerPrice,
 		&i.ReorderLevel,
@@ -505,28 +834,21 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (I
 const updateProductPrice = `-- name: UpdateProductPrice :one
 UPDATE istanahp.products
 SET 
-    cost_price = $2,
-    retail_price = $3,
-    customer_price = $4,
+    retail_price = $2,
+    customer_price = $3,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND deleted_at IS NULL
-RETURNING id, category_id, tax_rate_id, name, sku, description, cost_price, retail_price, customer_price, reorder_level, is_active, created_at, updated_at, deleted_at
+RETURNING id, category_id, tax_rate_id, name, sku, description, retail_price, customer_price, reorder_level, is_active, created_at, updated_at, deleted_at
 `
 
 type UpdateProductPriceParams struct {
 	ID            int64
-	CostPrice     string
 	RetailPrice   string
 	CustomerPrice sql.NullString
 }
 
 func (q *Queries) UpdateProductPrice(ctx context.Context, arg UpdateProductPriceParams) (IstanahpProduct, error) {
-	row := q.db.QueryRowContext(ctx, updateProductPrice,
-		arg.ID,
-		arg.CostPrice,
-		arg.RetailPrice,
-		arg.CustomerPrice,
-	)
+	row := q.db.QueryRowContext(ctx, updateProductPrice, arg.ID, arg.RetailPrice, arg.CustomerPrice)
 	var i IstanahpProduct
 	err := row.Scan(
 		&i.ID,
@@ -535,7 +857,6 @@ func (q *Queries) UpdateProductPrice(ctx context.Context, arg UpdateProductPrice
 		&i.Name,
 		&i.Sku,
 		&i.Description,
-		&i.CostPrice,
 		&i.RetailPrice,
 		&i.CustomerPrice,
 		&i.ReorderLevel,
@@ -553,7 +874,7 @@ SET
     is_active = $2,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND deleted_at IS NULL
-RETURNING id, category_id, tax_rate_id, name, sku, description, cost_price, retail_price, customer_price, reorder_level, is_active, created_at, updated_at, deleted_at
+RETURNING id, category_id, tax_rate_id, name, sku, description, retail_price, customer_price, reorder_level, is_active, created_at, updated_at, deleted_at
 `
 
 type UpdateProductStatusParams struct {
@@ -571,7 +892,6 @@ func (q *Queries) UpdateProductStatus(ctx context.Context, arg UpdateProductStat
 		&i.Name,
 		&i.Sku,
 		&i.Description,
-		&i.CostPrice,
 		&i.RetailPrice,
 		&i.CustomerPrice,
 		&i.ReorderLevel,

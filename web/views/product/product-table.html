@@ -1,0 +1,144 @@
+{{range .Products}}
+<tr class="hover:bg-gray-50 transition-colors">
+    <td class="px-6 py-4 whitespace-nowrap">
+        <div class="flex items-center">
+            {{if .ImageURL}}
+            <img class="h-10 w-10 rounded-md object-cover mr-3" src="{{.ImageURL}}" alt="{{.Name}}">
+            {{else}}
+            <div class="h-10 w-10 rounded-md bg-gray-200 flex items-center justify-center mr-3">
+                <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+            </div>
+            {{end}}
+            <div>
+                <div class="text-sm font-medium text-gray-900">{{.Name}}</div>
+                {{if .Description}}
+                <div class="text-sm text-gray-500 truncate max-w-xs">{{.Description}}</div>
+                {{end}}
+            </div>
+        </div>
+    </td>
+    <td class="px-6 py-4 whitespace-nowrap">
+        <span class="text-sm font-mono text-gray-900">{{.SKU}}</span>
+    </td>
+    <td class="px-6 py-4 whitespace-nowrap">
+        <span class="text-sm text-gray-900">{{.CategoryName}}</span>
+    </td>
+    <td class="px-6 py-4 whitespace-nowrap">
+        <span class="text-sm font-medium text-gray-900">${{printf "%.2f" .SalePrice}}</span>
+    </td>
+    {{if eq $.User.Role "admin"}}
+    <td class="px-6 py-4 whitespace-nowrap">
+        <span class="text-sm text-gray-600">${{printf "%.2f" .CostPrice}}</span>
+    </td>
+    {{end}}
+    <td class="px-6 py-4 whitespace-nowrap">
+        <div class="flex items-center">
+            <span class="text-sm text-gray-900 mr-2">{{.StockQuantity}}</span>
+            {{if lt .StockQuantity .ReorderLevel}}
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                Low Stock
+            </span>
+            {{else if eq .StockQuantity 0}}
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                Out of Stock
+            </span>
+            {{end}}
+        </div>
+    </td>
+    <td class="px-6 py-4 whitespace-nowrap">
+        {{if eq .Status "active"}}
+        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            Active
+        </span>
+        {{else if eq .Status "inactive"}}
+        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+            Inactive
+        </span>
+        {{else if eq .Status "discontinued"}}
+        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+            Discontinued
+        </span>
+        {{end}}
+    </td>
+    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+        <div class="flex items-center space-x-2">
+            <!-- View Button -->
+            <button 
+                class="text-blue-600 hover:text-blue-900 transition-colors"
+                hx-get="/products/{{.ID}}/view"
+                hx-target="#modal-container"
+                title="View Product">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                </svg>
+            </button>
+            
+            <!-- Edit Button -->
+            <button 
+                class="text-green-600 hover:text-green-900 transition-colors"
+                hx-get="/products/{{.ID}}/edit"
+                hx-target="#modal-container"
+                title="Edit Product">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+            </button>
+            
+            <!-- Duplicate Button -->
+            <button 
+                class="text-purple-600 hover:text-purple-900 transition-colors"
+                hx-post="/products/{{.ID}}/duplicate"
+                hx-target="#message-container"
+                hx-confirm="Are you sure you want to duplicate this product?"
+                title="Duplicate Product">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                </svg>
+            </button>
+            
+            <!-- Delete Button -->
+            <button 
+                class="text-red-600 hover:text-red-900 transition-colors"
+                hx-delete="/products/{{.ID}}"
+                hx-target="closest tr"
+                hx-swap="outerHTML swap:1s"
+                hx-confirm="Are you sure you want to delete this product?"
+                title="Delete Product">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+            </button>
+        </div>
+    </td>
+</tr>
+{{end}}
+
+{{if .HasMore}}
+<tr>
+    <td colspan="{{if eq $.User.Role "admin"}}8{{else}}7{{end}}" class="px-6 py-4 text-center">
+        <button 
+            class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors"
+            hx-get="/products/table?offset={{.NextOffset}}"
+            hx-target="#products-table-body"
+            hx-swap="beforeend"
+            hx-include="[name='search'], [name='category'], [name='status']">
+            Load More Products
+        </button>
+    </td>
+</tr>
+{{else if eq (len .Products) 0}}
+<tr>
+    <td colspan="{{if eq $.User.Role "admin"}}8{{else}}7{{end}}" class="px-6 py-12 text-center">
+        <div class="text-gray-500">
+            <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2 2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+            </svg>
+            <p class="text-lg font-medium">No products found</p>
+            <p class="text-sm">Try adjusting your search criteria or add a new product.</p>
+        </div>
+    </td>
+</tr>
+{{end}}

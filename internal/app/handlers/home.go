@@ -1,29 +1,61 @@
-// Package handlers is the file that contains the HomeHandler and its methods for handling requests related to the home page and click events.
+// Package handlers // handles the HTTP requests for the home page and dashboard.
 package handlers
 
 import (
+	"database/sql"
 	"net/http"
 
+	"github.com/aidityasadhakim/go-pos/internal/app/middleware"
 	"github.com/aidityasadhakim/go-pos/internal/platform/database"
 	"github.com/labstack/echo/v4"
 )
 
 type HomeHandler struct {
 	queries *database.Queries
+	db      *sql.DB
 }
 
-func NewHomeHandler(queries *database.Queries) *HomeHandler {
-	return &HomeHandler{queries: queries}
+type DashboardData struct {
+	UserName      string
+	UserRole      string
+	UserLevel     int64
+	TodaySales    string
+	ProductCount  int64
+	CustomerCount int64
+}
+
+func NewHomeHandler(queries *database.Queries, db *sql.DB) *HomeHandler {
+	return &HomeHandler{
+		queries: queries,
+		db:      db,
+	}
 }
 
 func (h *HomeHandler) Home(c echo.Context) error {
-	return c.Render(http.StatusOK, "home.html", nil)
+	// Get user session
+	sessionUser := middleware.GetSessionUser(c)
+	if sessionUser == nil {
+		return c.Redirect(http.StatusFound, "/login")
+	}
+
+	// Prepare template data with session info
+	data := DashboardData{
+		UserName:      sessionUser.Username, // For now, use username until we have full name
+		UserRole:      middleware.GetRoleName(sessionUser.RoleID),
+		UserLevel:     sessionUser.RoleID,
+		TodaySales:    "$0.00", // TODO: Implement today's sales calculation
+		ProductCount:  0,       // TODO: Will be available after SQLC generation
+		CustomerCount: 0,       // TODO: Will be available after SQLC generation
+	}
+
+	return c.Render(http.StatusOK, "home.html", data)
 }
 
 func (h *HomeHandler) Clicked(c echo.Context) error {
-	user, err := h.queries.GetUserByUsername(c.Request().Context(), "superadmin")
-	if err != nil {
-		return c.String(http.StatusInternalServerError, "Failed to retrieve user")
+	sessionUser := middleware.GetSessionUser(c)
+	if sessionUser == nil {
+		return c.String(http.StatusUnauthorized, "Not authenticated")
 	}
-	return c.HTML(http.StatusOK, "<h1>"+user.Username+"</h1>")
+
+	return c.HTML(http.StatusOK, "<h1>Hello, "+sessionUser.Username+"!</h1>")
 }

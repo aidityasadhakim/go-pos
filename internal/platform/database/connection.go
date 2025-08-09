@@ -11,7 +11,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func Connect() (*Queries, error) {
+func Connect() (*Queries, *sql.DB, error) {
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		getEnv("DB_HOST", "localhost"),
 		getEnv("DB_PORT", "5432"),
@@ -22,17 +22,17 @@ func Connect() (*Queries, error) {
 
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to database: %w", err)
+		return nil, nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := db.PingContext(ctx); err != nil {
-		return nil, fmt.Errorf("failed to ping database: %w", err)
+		return nil, nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	return New(db), nil
+	return New(db), db, nil
 }
 
 func getEnv(key, defaultValue string) string {

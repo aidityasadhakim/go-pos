@@ -6,7 +6,6 @@ CREATE TABLE IF NOT EXISTS istanahp.products (
     name VARCHAR(255) NOT NULL,
     sku VARCHAR(100) UNIQUE NOT NULL, -- Stock Keeping Unit
     description TEXT,
-    cost_price NUMERIC(19,2) NOT NULL, -- The base cost of the product
     retail_price NUMERIC(19,2) NOT NULL, -- The default selling price
     -- sale_price_non or alternate_retail_price might be added back if tiered pricing is needed
     customer_price NUMERIC(19,2), -- Price for specific customers or groups

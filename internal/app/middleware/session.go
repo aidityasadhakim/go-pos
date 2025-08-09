@@ -1,3 +1,4 @@
+// Package middleware // provides middleware functions for session management and authentication in the Echo web framework.
 package middleware
 
 import (
@@ -46,4 +47,17 @@ func GetSessionUser(c echo.Context) *session.Session {
 		return nil
 	}
 	return user.(*session.Session)
+}
+
+func GetRoleName(roleID int64) string {
+	switch roleID {
+	case 1:
+		return "Admin"
+	case 2:
+		return "Manager"
+	case 3:
+		return "Cashier"
+	default:
+		return "User"
+	}
 }

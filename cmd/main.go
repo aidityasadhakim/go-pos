@@ -16,7 +16,7 @@ func main() {
 	godotenv.Load(".env")
 
 	// Initialize database
-	queries, err := database.Connect()
+	queries, db, err := database.Connect()
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
@@ -31,11 +31,11 @@ func main() {
 	e.Use(middleware.Recover())
 
 	// Setup template renderer
-	renderer := server.NewTemplateRenderer("web/template")
+	renderer := server.NewTemplateRenderer("web")
 	e.Renderer = renderer
 
 	// Setup routes
-	routes.SetupRoutes(e, queries)
+	routes.SetupRoutes(e, queries, db)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

@@ -5,13 +5,12 @@ INSERT INTO istanahp.products (
     name,
     sku,
     description,
-    cost_price,
     retail_price,
     customer_price,
     reorder_level,
     is_active
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+    $1, $2, $3, $4, $5, $6, $7, $8, $9
 ) RETURNING *;
 
 -- name: GetProduct :one
@@ -56,11 +55,10 @@ SET
     name = $4,
     sku = $5,
     description = $6,
-    cost_price = $7,
-    retail_price = $8,
-    customer_price = $9,
-    reorder_level = $10,
-    is_active = $11,
+    retail_price = $7,
+    customer_price = $8,
+    reorder_level = $9,
+    is_active = $10,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND deleted_at IS NULL
 RETURNING *;
@@ -68,9 +66,8 @@ RETURNING *;
 -- name: UpdateProductPrice :one
 UPDATE istanahp.products
 SET 
-    cost_price = $2,
-    retail_price = $3,
-    customer_price = $4,
+    retail_price = $2,
+    customer_price = $3,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND deleted_at IS NULL
 RETURNING *;
@@ -112,3 +109,74 @@ WHERE p.reorder_level > 0
   AND p.deleted_at IS NULL
 ORDER BY p.name ASC;
 
+-- FIFO Cost Lot Management Queries
+
+-- name: CreateProductCostLot :one
+INSERT INTO istanahp.product_cost_lots (
+    product_id,
+    quantity,
+    unit_cost,
+    purchase_item_id,
+    received_at,
+    expires_at
+) VALUES (
+    $1, $2, $3, $4, $5, $6
+) RETURNING *;
+
+-- name: GetProductCostLot :one
+SELECT * FROM istanahp.product_cost_lots
+WHERE id = $1;
+
+-- name: ListProductCostLots :many
+SELECT * FROM istanahp.product_cost_lots
+WHERE product_id = $1 AND quantity > 0
+ORDER BY received_at ASC; -- FIFO ordering
+
+-- name: GetOldestCostLot :one
+SELECT * FROM istanahp.product_cost_lots
+WHERE product_id = $1 AND quantity > 0
+ORDER BY received_at ASC
+LIMIT 1;
+
+-- name: UpdateCostLotQuantity :one
+UPDATE istanahp.product_cost_lots
+SET 
+    quantity = $2,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $1
+RETURNING *;
+
+-- name: GetProductCostSummary :one
+SELECT 
+    p.id,
+    p.name,
+    p.sku,
+    COALESCE(SUM(pcl.quantity), 0) as total_quantity,
+    COALESCE(SUM(pcl.quantity * pcl.unit_cost), 0) as total_value,
+    CASE 
+        WHEN SUM(pcl.quantity) > 0 
+        THEN SUM(pcl.quantity * pcl.unit_cost) / SUM(pcl.quantity)
+        ELSE 0 
+    END as weighted_avg_cost
+FROM istanahp.products p
+LEFT JOIN istanahp.product_cost_lots pcl ON p.id = pcl.product_id AND pcl.quantity > 0
+WHERE p.id = $1 AND p.deleted_at IS NULL
+GROUP BY p.id, p.name, p.sku;
+
+-- name: GetExpiredCostLots :many
+SELECT * FROM istanahp.product_cost_lots
+WHERE expires_at IS NOT NULL 
+  AND expires_at < CURRENT_DATE 
+  AND quantity > 0
+ORDER BY expires_at ASC;
+
+-- name: GetCostLotsByDateRange :many
+SELECT pcl.*, p.name as product_name, p.sku
+FROM istanahp.product_cost_lots pcl
+JOIN istanahp.products p ON pcl.product_id = p.id
+WHERE pcl.received_at BETWEEN $1 AND $2
+ORDER BY pcl.received_at DESC;
+
+-- name: GetProductCategories :many
+SELECT * FROM istanahp.product_categories
+WHERE deleted_at IS NULL;

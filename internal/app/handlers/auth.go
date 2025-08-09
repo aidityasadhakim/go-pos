@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 
 	"github.com/aidityasadhakim/go-pos/internal/app/middleware"
@@ -13,10 +14,14 @@ import (
 
 type AuthHandler struct {
 	queries *database.Queries
+	db      *sql.DB
 }
 
-func NewAuthHandler(queries *database.Queries) *AuthHandler {
-	return &AuthHandler{queries: queries}
+func NewAuthHandler(queries *database.Queries, db *sql.DB) *AuthHandler {
+	return &AuthHandler{
+		queries: queries,
+		db:      db,
+	}
 }
 
 func (h *AuthHandler) Login(c echo.Context) error {
