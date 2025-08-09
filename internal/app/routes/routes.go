@@ -11,8 +11,10 @@ func SetupRoutes(e *echo.Echo, queries *database.Queries) {
 	// Apply session middleware globally
 	e.Use(middleware.SessionMiddleware())
 
-	// Serve static files
-	e.Static("/js", "web/js")
+	// Serve static files from public directory
+	e.Static("/css", "public/css")
+	e.Static("/js", "public/js")
+	e.Static("/img", "public/img")
 
 	homeHandler := handlers.NewHomeHandler(queries)
 	authHandler := handlers.NewAuthHandler(queries)

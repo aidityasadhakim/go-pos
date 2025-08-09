@@ -7,20 +7,59 @@ package database
 
 import (
 	"context"
+	"database/sql"
 )
 
 const createUser = `-- name: CreateUser :one
+INSERT INTO istanahp.users (role_id, name, username, password_hash, email, phone)
+VALUES ($1, $2, $3, $4, $5, $6)
+ON CONFLICT (username) DO NOTHING
+RETURNING id, role_id, name, username, password_hash, email, phone, is_active, last_login_at, created_at, updated_at, deleted_at
+`
 
+type CreateUserParams struct {
+	RoleID       int64
+	Name         string
+	Username     string
+	PasswordHash string
+	Email        sql.NullString
+	Phone        sql.NullString
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (IstanahpUser, error) {
+	row := q.db.QueryRowContext(ctx, createUser,
+		arg.RoleID,
+		arg.Name,
+		arg.Username,
+		arg.PasswordHash,
+		arg.Email,
+		arg.Phone,
+	)
+	var i IstanahpUser
+	err := row.Scan(
+		&i.ID,
+		&i.RoleID,
+		&i.Name,
+		&i.Username,
+		&i.PasswordHash,
+		&i.Email,
+		&i.Phone,
+		&i.IsActive,
+		&i.LastLoginAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const getUserByUsername = `-- name: GetUserByUsername :one
 SELECT id, role_id, name, username, password_hash, email, phone, is_active, last_login_at, created_at, updated_at, deleted_at FROM istanahp.users
 WHERE username = $1
 `
 
-// INSERT INTO istanahp.users (name, description)
-// VALUES ($1, $2)
-// ON CONFLICT (name) DO NOTHING
-// RETURNING *;
-func (q *Queries) CreateUser(ctx context.Context, username string) (IstanahpUser, error) {
-	row := q.db.QueryRowContext(ctx, createUser, username)
+func (q *Queries) GetUserByUsername(ctx context.Context, username string) (IstanahpUser, error) {
+	row := q.db.QueryRowContext(ctx, getUserByUsername, username)
 	var i IstanahpUser
 	err := row.Scan(
 		&i.ID,

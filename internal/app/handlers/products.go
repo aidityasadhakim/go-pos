@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/aidityasadhakim/go-pos/internal/platform/database"
@@ -17,12 +16,13 @@ func NewProductsHandler(queries *database.Queries) *ProductsHandler {
 }
 
 func (h *ProductsHandler) index(c echo.Context) error {
-	products, err := h.queries.GetAllProducts(context.Background())
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to fetch products"})
-	}
-
-	return c.Render(http.StatusOK, "products/list.html", map[string]interface{}{
-		"products": products,
-	})
+	// products, err := h.queries.GetAllProducts(context.Background())
+	// if err != nil {
+	// 	return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to fetch products"})
+	// }
+	//
+	// return c.Render(http.StatusOK, "products/list.html", map[string]interface{}{
+	// 	"products": products,
+	// })
+	return c.Render(http.StatusOK, "<h1>Products List</h1><p>List of products will be displayed here.</p>", nil)
 }
