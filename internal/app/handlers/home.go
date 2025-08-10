@@ -7,6 +7,7 @@ import (
 
 	"github.com/aidityasadhakim/go-pos/internal/app/middleware"
 	"github.com/aidityasadhakim/go-pos/internal/platform/database"
+	"github.com/aidityasadhakim/go-pos/internal/types"
 	"github.com/labstack/echo/v4"
 )
 
@@ -15,14 +16,7 @@ type HomeHandler struct {
 	db      *sql.DB
 }
 
-type DashboardData struct {
-	UserName      string
-	UserRole      string
-	UserLevel     int64
-	TodaySales    string
-	ProductCount  int64
-	CustomerCount int64
-}
+type DashboardData = types.DashboardData
 
 func NewHomeHandler(queries *database.Queries, db *sql.DB) *HomeHandler {
 	return &HomeHandler{

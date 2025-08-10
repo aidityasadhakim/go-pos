@@ -63,6 +63,15 @@ sqlc: ## Generate Go code from SQL
 	@echo "Generating Go code from SQL..."
 	@sqlc generate
 
+# Templ
+templ: ## Generate Go code from templ templates
+	@echo "Generating Go code from templ templates..."
+	@templ generate
+
+templ-watch: ## Watch and generate templ templates
+	@echo "Watching templ template changes..."
+	@templ generate --watch
+
 # Testing
 test: ## Run tests
 	@echo "Running tests..."
@@ -115,7 +124,7 @@ build-prod: ## Build for production
 	@echo "Production build complete: $(BUILD_DIR)/$(APP_NAME)"
 
 # Development workflow
-setup: install sqlc css ## Complete development environment setup
+setup: install sqlc templ css ## Complete development environment setup
 	@echo "Development environment setup complete!"
 	@echo "Run 'make dev' to start development server"
 
