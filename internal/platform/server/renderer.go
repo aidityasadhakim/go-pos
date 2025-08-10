@@ -1,33 +1,13 @@
-// Package server provides a custom template renderer for Echo framework.
+// Package server // provides utility functions for rendering templates in the Echo framework.
 package server
 
 import (
-	"html/template"
-	"io"
-	"path/filepath"
+	"context"
 
+	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
 )
 
-type TemplateRenderer struct {
-	templates *template.Template
-}
-
-func NewTemplateRenderer(templateDir string) *TemplateRenderer {
-	templates := template.New("")
-
-	// Parse layout template first
-	templates = template.Must(templates.ParseGlob(filepath.Join(templateDir, "template/*.html")))
-
-	// Parse all view templates
-	templates = template.Must(templates.ParseGlob(filepath.Join(templateDir, "views/*.html")))
-	templates = template.Must(templates.ParseGlob(filepath.Join(templateDir, "views/**/*.html")))
-
-	return &TemplateRenderer{
-		templates: templates,
-	}
-}
-
-func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
-	return t.templates.ExecuteTemplate(w, name, data)
+func RenderTempl(c echo.Context, component templ.Component) error {
+	return component.Render(context.Background(), c.Response().Writer)
 }

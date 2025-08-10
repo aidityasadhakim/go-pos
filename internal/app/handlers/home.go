@@ -7,7 +7,9 @@ import (
 
 	"github.com/aidityasadhakim/go-pos/internal/app/middleware"
 	"github.com/aidityasadhakim/go-pos/internal/platform/database"
+	"github.com/aidityasadhakim/go-pos/internal/platform/server"
 	"github.com/aidityasadhakim/go-pos/internal/types"
+	"github.com/aidityasadhakim/go-pos/views/pages"
 	"github.com/labstack/echo/v4"
 )
 
@@ -33,7 +35,7 @@ func (h *HomeHandler) Home(c echo.Context) error {
 	}
 
 	// Prepare template data with session info
-	data := DashboardData{
+	data := types.DashboardData{
 		UserName:      sessionUser.Username, // For now, use username until we have full name
 		UserRole:      middleware.GetRoleName(sessionUser.RoleID),
 		UserLevel:     sessionUser.RoleID,
@@ -42,7 +44,7 @@ func (h *HomeHandler) Home(c echo.Context) error {
 		CustomerCount: 0,       // TODO: Will be available after SQLC generation
 	}
 
-	return c.Render(http.StatusOK, "home.html", data)
+	return server.RenderTempl(c, pages.Home(data))
 }
 
 func (h *HomeHandler) Clicked(c echo.Context) error {

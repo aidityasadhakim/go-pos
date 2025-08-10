@@ -19,7 +19,6 @@ func SetupRoutes(e *echo.Echo, queries *database.Queries, db *sql.DB) {
 	e.Static("/img", "public/img")
 
 	homeHandler := handlers.NewHomeHandler(queries, db)
-	templHomeHandler := handlers.NewTemplHomeHandler(queries, db)
 	authHandler := handlers.NewAuthHandler(queries, db)
 	productsHandler := handlers.NewProductsHandler(queries, db)
 
@@ -32,8 +31,6 @@ func SetupRoutes(e *echo.Echo, queries *database.Queries, db *sql.DB) {
 	protected := e.Group("", middleware.RequireAuth())
 	protected.GET("/", homeHandler.Home)
 	protected.GET("/clicked", homeHandler.Clicked)
-	protected.GET("/templ", templHomeHandler.Home) // Test route for templ implementation
-	protected.GET("/templ/clicked", templHomeHandler.Clicked)
 	protected.GET("/products", productsHandler.Index)
 
 	adminOnly := e.Group("", middleware.AdminOnly())

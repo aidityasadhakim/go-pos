@@ -6,7 +6,6 @@ import (
 	"github.com/aidityasadhakim/go-pos/internal/app/routes"
 	"github.com/aidityasadhakim/go-pos/internal/platform/cache"
 	"github.com/aidityasadhakim/go-pos/internal/platform/database"
-	"github.com/aidityasadhakim/go-pos/internal/platform/server"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -29,10 +28,6 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-
-	// Setup template renderer
-	renderer := server.NewTemplateRenderer("web")
-	e.Renderer = renderer
 
 	// Setup routes
 	routes.SetupRoutes(e, queries, db)
