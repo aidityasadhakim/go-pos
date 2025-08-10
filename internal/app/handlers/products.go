@@ -17,11 +17,17 @@ type ProductsHandler struct {
 }
 
 type ProductsPageData struct {
-	UserName         string
-	UserRole         string
-	UserLevel        int64
-	IstanaHpProducts []database.IstanahpProduct
-	Categories       []database.IstanahpProductCategory
+	UserName  string
+	UserRole  string
+	UserLevel int64
+	Products  []database.ListProductsRow
+}
+
+type ProductCreateData struct {
+	UserName   string
+	UserRole   string
+	UserLevel  int64
+	Categories []database.GetProductCategoriesRow
 }
 
 func NewProductsHandler(queries *database.Queries, db *sql.DB) *ProductsHandler {
@@ -46,14 +52,11 @@ func (h *ProductsHandler) Index(c echo.Context) error {
 		return c.HTML(400, "Error fetching products: "+err.Error())
 	}
 
-	productCategories, err := h.queries.GetProductCategories(context.Background())
-
 	data := ProductsPageData{
-		UserName:         user.Username,
-		UserRole:         middleware.GetRoleName(user.RoleID),
-		UserLevel:        user.RoleID,
-		IstanaHpProducts: products,
-		Categories:       productCategories,
+		UserName:  user.Username,
+		UserRole:  middleware.GetRoleName(user.RoleID),
+		UserLevel: user.RoleID,
+		Products:  products,
 	}
 
 	return c.Render(200, "products.html", data)
@@ -71,13 +74,32 @@ func (h *ProductsHandler) Create(c echo.Context) error {
 		return c.HTML(400, "Error fetching product categories: "+err.Error())
 	}
 
-	data := ProductsPageData{
-		UserName:         user.Username,
-		UserRole:         middleware.GetRoleName(user.RoleID),
-		UserLevel:        user.RoleID,
-		IstanaHpProducts: []database.IstanahpProduct{},
-		Categories:       productCategories,
+	data := ProductCreateData{
+		UserName:   user.Username,
+		UserRole:   middleware.GetRoleName(user.RoleID),
+		UserLevel:  user.RoleID,
+		Categories: productCategories,
 	}
 
 	return c.Render(200, "add-product.html", data)
+}
+
+func (h *ProductsHandler) Store(c echo.Context) error {
+	user := middleware.GetSessionUser(c)
+
+	if user == nil {
+		return c.Redirect(302, "/login")
+	}
+
+	var product services.CreateProductRequest
+
+	if err := c.Bind(&product); err != nil {
+		return c.HTML(400, "Error binding product data: "+err.Error())
+	}
+
+	if _, err := h.ProductService.CreateProduct(c.Request().Context(), product); err != nil {
+		return c.HTML(400, "Error creating product: "+err.Error())
+	}
+
+	return c.Redirect(302, "/products")
 }

@@ -84,13 +84,12 @@ type IstanahpPaymentMethod struct {
 // Main product catalog with details.
 type IstanahpProduct struct {
 	ID            int64
-	CategoryID    sql.NullInt64
-	TaxRateID     sql.NullInt64
+	CategoryID    int64
 	Name          string
 	Sku           string
 	Description   sql.NullString
 	RetailPrice   string
-	CustomerPrice sql.NullString
+	CustomerPrice string
 	ReorderLevel  int32
 	IsActive      bool
 	CreatedAt     time.Time

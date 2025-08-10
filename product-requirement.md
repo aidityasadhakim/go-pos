@@ -7,7 +7,7 @@ Based on the database schema analysis and PRD requirements, here's the structure
 The project has a comprehensive 24-table schema covering:
 - **Core entities**: roles, users, products, customers, suppliers
 - **Transaction management**: sales, sale_items, purchases, inventory_movements  
-- **Configuration tables**: tax_rates, payment_methods, sale_statuses, product_categories
+- **Configuration tables**: payment_methods, sale_statuses, product_categories
 - **Advanced inventory tracking**: inventory_levels with automatic stock deduction
 - **FIFO Cost Management**: product_cost_lots for accurate COGS and profit calculations
 - **Financial records**: transaction_payments, receipt_templates
@@ -28,7 +28,7 @@ The project has a comprehensive 24-table schema covering:
    - Session persistence with Redis cache
 
 3. **Basic Product Management**
-   - CRUD operations for products (name, SKU, price, category, tax_rate)
+   - CRUD operations for products (name, SKU, price, category)
    - Product categories management
    - Basic product search functionality
 
@@ -38,7 +38,7 @@ The project has a comprehensive 24-table schema covering:
 1. **Sales Transaction Engine**
    - Shopping cart implementation with HTMX
    - Add/remove items, quantity adjustments
-   - Real-time price calculation with taxes
+   - Real-time price calculation
    - Multiple payment method support
 
 2. **Inventory Integration**

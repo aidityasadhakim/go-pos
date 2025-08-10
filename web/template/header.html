@@ -5,10 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ISTANA HP - POS System</title>
   
-    <link href="https://cdn.datatables.net/v/dt/dt-2.3.2/datatables.min.css" rel="stylesheet" integrity="sha384-d76uxpdVr9QyCSR9vVSYdOAZeRzNUN8A4JVqUHBVXyGxZ+oOfrZVHC/1Y58mhyNg" crossorigin="anonymous">
     <link rel="stylesheet" href="/css/output.css">
 
-    <script src="https://cdn.datatables.net/v/dt/dt-2.3.2/datatables.min.js" integrity="sha384-JRUjeYWWUGO171YFugrU0ksSC6CaWnl4XzwP6mNjnnDh4hfFGRyYbEXwryGwLsEp" crossorigin="anonymous"></script>
+    <script src="//unpkg.com/alpinejs" defer></script>
     <script src="/js/htmx.min.js"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -138,7 +137,6 @@
                     <div class="hidden md:flex items-center space-x-4">
                         <div class="relative group">
                             <button class="flex items-center space-x-2 text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium">
-                                <img src="/img/user-avatar.png" alt="User" class="h-8 w-8 rounded-full">
                                 <span>{{.UserName}}</span>
                                 <svg class="ml-1 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>

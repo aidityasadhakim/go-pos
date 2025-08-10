@@ -1,7 +1,6 @@
 -- name: CreateProduct :one
 INSERT INTO istanahp.products (
     category_id,
-    tax_rate_id,
     name,
     sku,
     description,
@@ -10,7 +9,7 @@ INSERT INTO istanahp.products (
     reorder_level,
     is_active
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9
+    $1, $2, $3, $4, $5, $6, $7, $8
 ) RETURNING *;
 
 -- name: GetProduct :one
@@ -22,9 +21,19 @@ SELECT * FROM istanahp.products
 WHERE sku = $1 AND deleted_at IS NULL;
 
 -- name: ListProducts :many
-SELECT * FROM istanahp.products
-WHERE deleted_at IS NULL
-ORDER BY created_at DESC
+select 
+	p.id,
+	p.name,
+	pc.name as category_name,
+	p.sku,
+	p.retail_price,
+	p.customer_price,
+	p.reorder_level
+FROM istanahp.products p
+left join istanahp.product_categories pc
+	on pc.id = p.category_id
+WHERE p.deleted_at IS null and is_active = true
+ORDER BY p.created_at desc
 LIMIT $1 OFFSET $2;
 
 -- name: ListActiveProducts :many
@@ -51,14 +60,13 @@ LIMIT $2 OFFSET $3;
 UPDATE istanahp.products
 SET 
     category_id = $2,
-    tax_rate_id = $3,
-    name = $4,
-    sku = $5,
-    description = $6,
-    retail_price = $7,
-    customer_price = $8,
-    reorder_level = $9,
-    is_active = $10,
+    name = $3,
+    sku = $4,
+    description = $5,
+    retail_price = $6,
+    customer_price = $7,
+    reorder_level = $8,
+    is_active = $9,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $1 AND deleted_at IS NULL
 RETURNING *;
@@ -176,5 +184,5 @@ WHERE pcl.received_at BETWEEN $1 AND $2
 ORDER BY pcl.received_at DESC;
 
 -- name: GetProductCategories :many
-SELECT * FROM istanahp.product_categories
+SELECT id, name FROM istanahp.product_categories
 WHERE deleted_at IS NULL;

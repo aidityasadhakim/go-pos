@@ -13,79 +13,42 @@
 
     <!-- Products Table -->
     <div class="bg-white rounded-lg shadow overflow-hidden">
-      <div class="p-4 border-b border-red-200 flex justify-between items-center">
+      <div class="p-4 flex justify-between items-center">
             <table id="products-table" class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider no-sort">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    {{ if eq .IstanaHpProducts nil }}
+                    {{ if eq .Products nil }}
                     <tr>
-                        <td colspan="{{if eq .UserRole "admin"}}8{{else}}7{{end}}" class="px-6 py-4 text-center text-gray-500">
+                        <td colspan="5" class="px-6 py-4 text-center text-gray-500">
                             No products found.
                         </td>
                     </tr>
                     {{else}}
-                    {{range .IstanaHpProducts}}
+                    {{range .Products}}
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                     <div class="text-sm font-medium text-gray-900">{{.Name}}</div>
-                                    {{if .Description}}
-                                    <div class="text-sm text-gray-500 truncate max-w-xs">{{.Description}}</div>
-                                    {{end}}
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="text-sm font-mono text-gray-900">{{.SKU}}</span>
+                            <span class="text-sm font-mono text-gray-900">{{.Sku}}</span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="text-sm text-gray-900">{{.CategoryName}}</span>
+                            <span class="text-sm text-gray-900">{{if .CategoryName.Valid}}{{.CategoryName.String}}{{else}}No Category{{end}}</span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap" data-order="{{.SalePrice}}">
-                            <span class="text-sm font-medium text-gray-900">${{printf "%.2f" .SalePrice}}</span>
+                        <td class="px-6 py-4 whitespace-nowrap" data-order="{{.RetailPrice}}">
+              <span class="text-sm font-medium text-gray-900" x-data="{ retailPrice: {{ .RetailPrice }} }" x-text="new Intl.NumberFormat('en-US').format(retailPrice)"></span>
                         </td>
-                        {{if eq $.UserRole "admin"}}
-                        <td class="px-6 py-4 whitespace-nowrap" data-order="{{.CostPrice}}">
-                            <span class="text-sm text-gray-600">${{printf "%.2f" .CostPrice}}</span>
-                        </td>
-                        {{end}}
-                        <td class="px-6 py-4 whitespace-nowrap" data-order="{{.StockQuantity}}">
-                            <div class="flex items-center">
-                                <span class="text-sm text-gray-900 mr-2">{{.StockQuantity}}</span>
-                                {{if lt .StockQuantity .ReorderLevel}}
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                    Low Stock
-                                </span>
-                                {{else if eq .StockQuantity 0}}
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                    Out of Stock
-                                </span>
-                                {{end}}
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            {{if eq .IsActive "active"}}
-                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                Active
-                            </span>
-                            {{else if eq .IsActive "inactive"}}
-                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                Inactive
-                            </span>
-                            {{else if eq .IsActive "discontinued"}}
-                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                Discontinued
-                            </span>
-                            {{end}}
-                        </td>
+                       
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex items-center space-x-2">
                                 <!-- Edit Button -->
@@ -120,113 +83,5 @@
     </div>
 </div>
 
-<!-- Modal Container -->
-<div id="modal-container"></div>
-
-<!-- Success/Error Messages -->
-<div id="message-container" class="fixed top-4 right-4 z-50"></div>
-
 {{ template "footer-body.html"  . }}
-
-<script>
-$(document).ready(function() {
-    // Initialize DataTables
-    var table = $('#products-table').DataTable({
-        responsive: true,
-        pageLength: 25,
-        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-        order: [[0, 'asc']], // Sort by product name by default
-        columnDefs: [
-            {
-                targets: 'no-sort',
-                orderable: false,
-                searchable: false
-            },
-            {
-                targets: [3{{if eq .UserRole "admin"}}, 4{{end}}, 5], // Price, Cost (if admin), Stock columns
-                type: 'num'
-            }
-        ],
-        language: {
-            search: "Search products:",
-            lengthMenu: "Show _MENU_ products per page",
-            info: "Showing _START_ to _END_ of _TOTAL_ products",
-            infoEmpty: "No products found",
-            infoFiltered: "(filtered from _MAX_ total products)",
-            zeroRecords: "No matching products found",
-            emptyTable: "No products available",
-            paginate: {
-                first: "First",
-                last: "Last",
-                next: "Next",
-                previous: "Previous"
-            }
-        },
-        dom: '<"flex flex-col sm:flex-row justify-between items-center mb-4"<"mb-2 sm:mb-0"l><"mb-2 sm:mb-0"f>>rtip',
-        initComplete: function() {
-            // Custom styling for DataTables elements
-            $('.dataTables_length select').addClass('px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500');
-            $('.dataTables_filter input').addClass('px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500').attr('placeholder', 'Search products...');
-            $('.dataTables_length label').addClass('text-sm text-gray-700');
-            $('.dataTables_filter label').addClass('text-sm text-gray-700');
-        }
-    });
-
-    // Custom category filter
-    $('#category-filter').on('change', function() {
-        var val = $.fn.dataTable.util.escapeRegex($(this).val());
-        table.column(2).search(val ? '^' + val + '$' : '', true, false).draw();
-    });
-
-    // Custom status filter  
-    $('#status-filter').on('change', function() {
-        var val = $.fn.dataTable.util.escapeRegex($(this).val());
-        table.column(6).search(val ? val : '', true, false).draw();
-    });
-});
-
-// Delete product function
-function deleteProduct(productId, buttonElement) {
-    if (confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
-        fetch(`/products/${productId}`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Remove the row from DataTables
-                var table = $('#products-table').DataTable();
-                table.row($(buttonElement).closest('tr')).remove().draw();
-                
-                // Show success message
-                showMessage('Product deleted successfully', 'success');
-            } else {
-                showMessage('Error deleting product: ' + data.message, 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showMessage('Error deleting product', 'error');
-        });
-    }
-}
-
-// Show message function
-function showMessage(message, type) {
-    const messageContainer = document.getElementById('message-container');
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `p-4 rounded-md mb-4 ${type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`;
-    messageDiv.textContent = message;
-    
-    messageContainer.appendChild(messageDiv);
-    
-    setTimeout(() => {
-        messageDiv.remove();
-    }, 5000);
-}
-</script>
-
 {{template "footer.html" .}}

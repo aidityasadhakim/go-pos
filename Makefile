@@ -89,11 +89,10 @@ docker-rebuild: ## Rebuild and restart Docker containers
 # Database migrations (if using migrate tool)
 migrate-up: ## Run database migrations up
 	@echo "Running database migrations..."
-	@migrate -path ./sql/schema -database "postgres://$(DB_USER):$(DB_PASSWORD)@localhost:$(DB_PORT)/$(DB_NAME)?sslmode=disable" up
-
+	@goose up
 migrate-down: ## Run database migrations down
 	@echo "Rolling back database migrations..."
-	@migrate -path ./sql/schema -database "postgres://$(DB_USER):$(DB_PASSWORD)@localhost:$(DB_PORT)/$(DB_NAME)?sslmode=disable" down
+	@goose down-to 0
 
 # Cleanup
 clean: ## Clean build artifacts and temporary files

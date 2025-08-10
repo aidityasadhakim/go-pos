@@ -1,3 +1,4 @@
+// Package services provides the implementation of product-related services.
 package services
 
 import (
@@ -14,32 +15,28 @@ type ProductService struct {
 }
 
 type CreateProductRequest struct {
-	CategoryID    int64   `form:"category_id"`
-	TaxRateID     int64   `form:"tax_rate_id"`
-	Name          string  `form:"name"`
-	SKU           string  `form:"sku"`
-	Barcode       *string `form:"barcode,omitempty"`
-	Description   *string `form:"description,omitempty"`
-	CostPrice     string  `form:"cost_price"`
-	RetailPrice   string  `form:"retail_price"`
-	CustomerPrice *string `form:"customer_price,omitempty"`
-	ReorderLevel  int32   `form:"reorder_level"`
-	IsActive      bool    `form:"is_active"`
+	CategoryID    int64          `form:"category_id"`
+	Name          string         `form:"name"`
+	SKU           string         `form:"sku"`
+	Barcode       *string        `form:"barcode,omitempty"`
+	Description   sql.NullString `form:"description,omitempty"`
+	RetailPrice   string         `form:"retail_price"`
+	CustomerPrice string         `form:"customer_price"`
+	ReorderLevel  int32          `form:"reorder_level"`
+	IsActive      bool           `form:"is_active"`
 }
 
 type UpdateProductRequest struct {
-	ID            int64   `form:"id"`
-	CategoryID    int64   `form:"category_id"`
-	TaxRateID     int64   `form:"tax_rate_id"`
-	Name          string  `form:"name"`
-	SKU           string  `form:"sku"`
-	Barcode       *string `form:"barcode,omitempty"`
-	Description   *string `form:"description,omitempty"`
-	CostPrice     string  `form:"cost_price"`
-	RetailPrice   string  `form:"retail_price"`
-	CustomerPrice *string `form:"customer_price,omitempty"`
-	ReorderLevel  int32   `form:"reorder_level"`
-	IsActive      bool    `form:"is_active"`
+	ID            int64          `form:"id"`
+	CategoryID    int64          `form:"category_id"`
+	Name          string         `form:"name"`
+	SKU           string         `form:"sku"`
+	Barcode       *string        `form:"barcode,omitempty"`
+	Description   sql.NullString `form:"description,omitempty"`
+	RetailPrice   string         `form:"retail_price"`
+	CustomerPrice string         `form:"customer_price"`
+	ReorderLevel  int32          `form:"reorder_level"`
+	IsActive      bool           `form:"is_active"`
 }
 
 type SearchProductsRequest struct {
@@ -55,37 +52,35 @@ func NewProductService(queries *database.Queries, db *sql.DB) *ProductService {
 	}
 }
 
-// func (s *ProductService) CreateProduct(ctx context.Context, req CreateProductRequest) (*database.IstanahpProduct, error) {
-// 	tx, err := s.db.BeginTx(ctx, nil)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
-// 	}
-// 	defer tx.Rollback()
-//
-// 	qtx := s.queries.WithTx(tx)
-//
-// 	product, err := qtx.CreateProduct(ctx, database.CreateProductParams{
-// 		CategoryID:    req.CategoryID,
-// 		TaxRateID:     req.TaxRateID,
-// 		Name:          req.Name,
-// 		Sku:           req.SKU,
-// 		Description:   req.Description,
-// 		CostPrice:     req.CostPrice,
-// 		RetailPrice:   req.RetailPrice,
-// 		CustomerPrice: req.CustomerPrice,
-// 		ReorderLevel:  req.ReorderLevel,
-// 		IsActive:      req.IsActive,
-// 	})
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to create product: %w", err)
-// 	}
-//
-// 	if err := tx.Commit(); err != nil {
-// 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
-// 	}
-//
-// 	return &product, nil
-// }
+func (s *ProductService) CreateProduct(ctx context.Context, req CreateProductRequest) (*database.IstanahpProduct, error) {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	qtx := s.queries.WithTx(tx)
+
+	product, err := qtx.CreateProduct(ctx, database.CreateProductParams{
+		CategoryID:    req.CategoryID,
+		Name:          req.Name,
+		Sku:           req.SKU,
+		Description:   req.Description,
+		RetailPrice:   req.RetailPrice,
+		CustomerPrice: req.CustomerPrice,
+		ReorderLevel:  req.ReorderLevel,
+		IsActive:      req.IsActive,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create product: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return &product, nil
+}
 
 // func (s *ProductService) GetProduct(ctx context.Context, id int64) (*database.IstanahpProduct, error) {
 // 	product, err := s.queries.GetProduct(ctx, id)
@@ -107,11 +102,9 @@ func NewProductService(queries *database.Queries, db *sql.DB) *ProductService {
 // 	product, err := s.queries.UpdateProduct(ctx, database.UpdateProductParams{
 // 		ID:            req.ID,
 // 		CategoryID:    req.CategoryID,
-// 		TaxRateID:     req.TaxRateID,
 // 		Name:          req.Name,
 // 		Sku:           req.SKU,
 // 		Description:   req.Description,
-// 		CostPrice:     req.CostPrice,
 // 		RetailPrice:   req.RetailPrice,
 // 		CustomerPrice: req.CustomerPrice,
 // 		ReorderLevel:  req.ReorderLevel,
@@ -130,24 +123,24 @@ func NewProductService(queries *database.Queries, db *sql.DB) *ProductService {
 // 	return nil
 // }
 
-func (s *ProductService) ListProducts(ctx context.Context, limit, offset int32) ([]database.IstanahpProduct, error) {
-	products, err := s.queries.ListProducts(ctx, database.ListProductsParams{
-		Limit:  limit,
-		Offset: offset,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to list products: %w", err)
-	}
-	return products, nil
-}
-
-func (s *ProductService) ListActiveProducts(ctx context.Context) ([]database.IstanahpProduct, error) {
-	products, err := s.queries.ListActiveProducts(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list active products: %w", err)
-	}
-	return products, nil
-}
+// func (s *ProductService) ListProducts(ctx context.Context, limit, offset int32) ([]database.IstanahpProduct, error) {
+// 	products, err := s.queries.ListProducts(ctx, database.ListProductsParams{
+// 		Limit:  limit,
+// 		Offset: offset,
+// 	})
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to list products: %w", err)
+// 	}
+// 	return products, nil
+// }
+//
+// func (s *ProductService) ListActiveProducts(ctx context.Context) ([]database.IstanahpProduct, error) {
+// 	products, err := s.queries.ListActiveProducts(ctx)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to list active products: %w", err)
+// 	}
+// 	return products, nil
+// }
 
 // func (s *ProductService) SearchProducts(ctx context.Context, req SearchProductsRequest) ([]database.IstanahpProduct, error) {
 // 	products, err := s.queries.SearchProducts(ctx, database.SearchProductsParams{

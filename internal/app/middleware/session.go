@@ -41,6 +41,23 @@ func RequireAuth() echo.MiddlewareFunc {
 	}
 }
 
+func AdminOnly() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			user := c.Get(SessionUserKey)
+			if user == nil {
+				return c.Redirect(302, "/login")
+			}
+
+			sessionUser := user.(*session.Session)
+			if sessionUser.RoleID != 1 && sessionUser.RoleID != 2 { // Admin or Manager
+				return c.Redirect(302, "/")
+			}
+			return next(c)
+		}
+	}
+}
+
 func GetSessionUser(c echo.Context) *session.Session {
 	user := c.Get(SessionUserKey)
 	if user == nil {
