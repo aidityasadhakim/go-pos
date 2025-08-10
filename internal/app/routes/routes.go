@@ -33,7 +33,7 @@ func SetupRoutes(e *echo.Echo, queries *database.Queries, db *sql.DB) {
 	protected.GET("/clicked", homeHandler.Clicked)
 	protected.GET("/products", productsHandler.Index)
 
-	adminOnly := e.Group("", middleware.AdminOnly())
-	adminOnly.GET("/product/add", productsHandler.Create)
-	adminOnly.POST("/product/add", productsHandler.Store)
+	// adminOnly := e.Group("", middleware.AdminOnly())
+	// adminOnly.GET("/product/add", productsHandler.Create)
+	// adminOnly.POST("/product/add", productsHandler.Store)
 }

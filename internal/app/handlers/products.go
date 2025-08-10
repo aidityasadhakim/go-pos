@@ -7,6 +7,9 @@ import (
 	"github.com/aidityasadhakim/go-pos/internal/app/middleware"
 	"github.com/aidityasadhakim/go-pos/internal/app/services"
 	"github.com/aidityasadhakim/go-pos/internal/platform/database"
+	"github.com/aidityasadhakim/go-pos/internal/platform/server"
+	"github.com/aidityasadhakim/go-pos/internal/types"
+	"github.com/aidityasadhakim/go-pos/views/pages/product"
 	"github.com/labstack/echo/v4"
 )
 
@@ -14,13 +17,6 @@ type ProductsHandler struct {
 	queries        *database.Queries
 	db             *sql.DB
 	ProductService *services.ProductService
-}
-
-type ProductsPageData struct {
-	UserName  string
-	UserRole  string
-	UserLevel int64
-	Products  []database.ListProductsRow
 }
 
 type ProductCreateData struct {
@@ -52,54 +48,54 @@ func (h *ProductsHandler) Index(c echo.Context) error {
 		return c.HTML(400, "Error fetching products: "+err.Error())
 	}
 
-	data := ProductsPageData{
+	data := types.ProductsPageData{
 		UserName:  user.Username,
 		UserRole:  middleware.GetRoleName(user.RoleID),
 		UserLevel: user.RoleID,
 		Products:  products,
 	}
 
-	return c.Render(200, "products.html", data)
+	return server.RenderTempl(c, product.Index(data))
 }
 
-func (h *ProductsHandler) Create(c echo.Context) error {
-	user := middleware.GetSessionUser(c)
-
-	if user == nil {
-		return c.Redirect(302, "/login")
-	}
-
-	productCategories, err := h.queries.GetProductCategories(context.Background())
-	if err != nil {
-		return c.HTML(400, "Error fetching product categories: "+err.Error())
-	}
-
-	data := ProductCreateData{
-		UserName:   user.Username,
-		UserRole:   middleware.GetRoleName(user.RoleID),
-		UserLevel:  user.RoleID,
-		Categories: productCategories,
-	}
-
-	return c.Render(200, "add-product.html", data)
-}
-
-func (h *ProductsHandler) Store(c echo.Context) error {
-	user := middleware.GetSessionUser(c)
-
-	if user == nil {
-		return c.Redirect(302, "/login")
-	}
-
-	var product services.CreateProductRequest
-
-	if err := c.Bind(&product); err != nil {
-		return c.HTML(400, "Error binding product data: "+err.Error())
-	}
-
-	if _, err := h.ProductService.CreateProduct(c.Request().Context(), product); err != nil {
-		return c.HTML(400, "Error creating product: "+err.Error())
-	}
-
-	return c.Redirect(302, "/products")
-}
+// func (h *ProductsHandler) Create(c echo.Context) error {
+// 	user := middleware.GetSessionUser(c)
+//
+// 	if user == nil {
+// 		return c.Redirect(302, "/login")
+// 	}
+//
+// 	productCategories, err := h.queries.GetProductCategories(context.Background())
+// 	if err != nil {
+// 		return c.HTML(400, "Error fetching product categories: "+err.Error())
+// 	}
+//
+// 	data := ProductCreateData{
+// 		UserName:   user.Username,
+// 		UserRole:   middleware.GetRoleName(user.RoleID),
+// 		UserLevel:  user.RoleID,
+// 		Categories: productCategories,
+// 	}
+//
+// 	return c.Render(200, "add-product.html", data)
+// }
+//
+// func (h *ProductsHandler) Store(c echo.Context) error {
+// 	user := middleware.GetSessionUser(c)
+//
+// 	if user == nil {
+// 		return c.Redirect(302, "/login")
+// 	}
+//
+// 	var product services.CreateProductRequest
+//
+// 	if err := c.Bind(&product); err != nil {
+// 		return c.HTML(400, "Error binding product data: "+err.Error())
+// 	}
+//
+// 	if _, err := h.ProductService.CreateProduct(c.Request().Context(), product); err != nil {
+// 		return c.HTML(400, "Error creating product: "+err.Error())
+// 	}
+//
+// 	return c.Redirect(302, "/products")
+// }

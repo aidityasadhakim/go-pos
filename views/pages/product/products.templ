@@ -1,0 +1,10 @@
+package product
+
+import "github.com/aidityasadhakim/go-pos/views/layouts"
+import "github.com/aidityasadhakim/go-pos/internal/types"
+
+templ Index(data types.ProductsPageData) {
+@layouts.Base("Products", data) {
+<h1>Hello World</h1>
+}
+}

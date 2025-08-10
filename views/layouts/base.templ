@@ -3,35 +3,38 @@ package layouts
 import "github.com/aidityasadhakim/go-pos/internal/types"
 import "github.com/aidityasadhakim/go-pos/views/components"
 
-templ Base(title string, data types.DashboardData) {
-	<!DOCTYPE html>
-	<html lang="en">
-	<head>
-		<meta charset="UTF-8"/>
-		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-		<title>ISTANA HP - POS System</title>
-		<link rel="stylesheet" href="/css/output.css"/>
-		<script src="//unpkg.com/alpinejs" defer></script>
-		<script src="/js/htmx.min.js"></script>
-	</head>
-	<body class="bg-gray-50 min-h-screen">
-		<div class="min-h-screen flex flex-col">
-			@components.Navigation(data)
-			<main class="flex-1">
-				<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-					{ children... }
-				</div>
-			</main>
-			@Footer()
-		</div>
-	</body>
-	</html>
+templ Base(title string, data types.User) {
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ISTANA HP - POS System</title>
+  <link rel="stylesheet" href="/css/output.css" />
+  <script src="//unpkg.com/alpinejs" defer></script>
+  <script src="/js/htmx.min.js"></script>
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+  <div class="min-h-screen flex flex-col">
+    @components.Navigation(data)
+    <main class="flex-1">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        { children... }
+      </div>
+    </main>
+    @Footer()
+  </div>
+</body>
+
+</html>
 }
 
 templ Footer() {
-	<footer class="bg-white border-t border-gray-200">
-		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-			<p class="text-center text-sm text-gray-500">Made with love</p>
-		</div>
-	</footer>
+<footer class="bg-white border-t border-gray-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <p class="text-center text-sm text-gray-500">Made with love</p>
+  </div>
+</footer>
 }
